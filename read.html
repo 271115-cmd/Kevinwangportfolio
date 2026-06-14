@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <title>Read This Building — Kevin Wang</title>
+  <meta name="description" content="An AI that reads a building from a photo — its style, elements, and culture — and openly flags its own blind spots. A study by Kevin Wang in what AI sees, and misses, in architecture." />
+  <meta name="theme-color" content="#F4F1EA" />
+  <meta property="og:title" content="Read This Building — an AI architecture experiment by Kevin Wang" />
+  <meta property="og:description" content="Upload a building. The AI reads it — then admits what it can't know." />
+  <meta property="og:image" content="/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:image" content="/og-image.png" />
+  <noscript><style>#page-transition{display:none!important}.reveal{opacity:1!important;transform:none!important}#site-dropdown{position:static!important}</style></noscript>
+</head>
+<body data-page="" data-year="2026">
+  <div id="page-transition" aria-hidden="true"><div class="pt-panel"><span class="pt-label"></span></div></div>
+  <div id="cursor" aria-hidden="true"></div>
+  <div id="cursor-text" aria-hidden="true"></div>
+
+  <header id="site-header"></header>
+  <div id="site-dropdown" hidden role="dialog" aria-modal="true" aria-label="Site index"></div>
+
+  <main id="page">
+    <section class="bleed">
+      <div class="section-head">
+        <span class="sh-index">↗</span>
+        <h1 class="sh-title">Read This<br />Building</h1>
+        <div class="sh-meta">
+          <span>AI · vision · a critical experiment</span>
+          <span class="accent">Powered by Gemini</span>
+        </div>
+      </div>
+
+      <p class="read-thesis reveal">Show the machine a building and it will read it back to you — style, elements,
+        culture — fluently and fast. The point of this tool isn't the answer. It's the <em class="accent">blind
+        spots</em>: AI is trained mostly on Western, canonical, professionally-shot architecture, so it tends to
+        force vernacular and non-Western buildings into borrowed categories. Every reading here ends by naming
+        what it's guessing, and where it's likely wrong.</p>
+
+      <div id="read-app" class="read-app">
+        <!-- upload / controls -->
+        <div class="read-stage reveal">
+          <label id="read-drop" class="read-drop" for="read-file" tabindex="0" aria-label="Upload a building photo">
+            <input id="read-file" type="file" accept="image/*" hidden />
+            <div class="read-drop-inner">
+              <span class="read-drop-glyph" aria-hidden="true">＋</span>
+              <span class="read-drop-text">Drop a building photo<br /><span class="mono">or click to choose · or pick a sample below</span></span>
+            </div>
+            <img id="read-preview" class="read-preview" alt="" hidden />
+          </label>
+
+          <div class="read-controls">
+            <div class="read-samples" aria-label="Sample images">
+              <span class="mono read-samples-label">Try one (shot in Qianmen, Beijing) —</span>
+              <button class="read-sample" type="button" data-src="/work/samples/duyichu.jpg">Duyichu (heritage)</button>
+              <button class="read-sample" type="button" data-src="/work/samples/hutong.jpg">Hutong (vernacular)</button>
+              <button class="read-sample" type="button" data-src="/work/samples/modern.jpg">Modern entrance</button>
+            </div>
+            <input id="read-note" class="read-note" type="text" maxlength="200" placeholder="Add context (optional) — e.g. “shot in a hutong, Beijing”" />
+            <button id="read-go" class="read-go" type="button" data-magnetic disabled>Read it ↗</button>
+          </div>
+        </div>
+
+        <!-- status -->
+        <div id="read-status" class="read-status" hidden aria-live="polite"></div>
+
+        <!-- result -->
+        <article id="read-result" class="read-result" hidden></article>
+      </div>
+
+      <p class="read-foot mono reveal">Your image is sent once to the model to generate a reading and is not stored.
+        Readings are probabilistic and often wrong — that's the subject, not a bug.</p>
+    </section>
+  </main>
+
+  <footer id="site-footer"></footer>
+
+  <nav class="static-nav" aria-label="Site">
+    <a href="/">Home</a><a href="/architecture.html">Architecture</a><a href="/models.html">Models</a><a href="/graphic.html">Graphic</a><a href="/objects.html">Objects</a><a href="/web.html">Web</a><a href="/about.html">About</a>
+  </nav>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

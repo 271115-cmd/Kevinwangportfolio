@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- If you move to a custom domain, replace the host in every <loc> (and in
+     robots.txt's Sitemap: line), then re-deploy. -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://kevinwangporfolio.pages.dev/</loc><lastmod>2026-06-14</lastmod><priority>1.0</priority></url>
+  <url><loc>https://kevinwangporfolio.pages.dev/architecture.html</loc><lastmod>2026-06-14</lastmod><priority>0.9</priority></url>
+  <url><loc>https://kevinwangporfolio.pages.dev/models.html</loc><lastmod>2026-06-14</lastmod><priority>0.8</priority></url>
+  <url><loc>https://kevinwangporfolio.pages.dev/graphic.html</loc><lastmod>2026-06-14</lastmod><priority>0.8</priority></url>
+  <url><loc>https://kevinwangporfolio.pages.dev/objects.html</loc><lastmod>2026-06-14</lastmod><priority>0.8</priority></url>
+  <url><loc>https://kevinwangporfolio.pages.dev/web.html</loc><lastmod>2026-06-14</lastmod><priority>0.7</priority></url>
+  <url><loc>https://kevinwangporfolio.pages.dev/about.html</loc><lastmod>2026-06-14</lastmod><priority>0.8</priority></url>
+  <url><loc>https://kevinwangporfolio.pages.dev/read.html</loc><lastmod>2026-06-14</lastmod><priority>0.7</priority></url>
+  <url><loc>https://kevinwangporfolio.pages.dev/project.html?slug=cubist-exhibition-center</loc><lastmod>2026-06-14</lastmod><priority>0.6</priority></url>
+  <url><loc>https://kevinwangporfolio.pages.dev/project.html?slug=qianmen-derive</loc><lastmod>2026-06-14</lastmod><priority>0.6</priority></url>
+  <url><loc>https://kevinwangporfolio.pages.dev/project.html?slug=central-axis</loc><lastmod>2026-06-14</lastmod><priority>0.6</priority></url>
+  <url><loc>https://kevinwangporfolio.pages.dev/project.html?slug=time-building</loc><lastmod>2026-06-14</lastmod><priority>0.6</priority></url>
+  <url><loc>https://kevinwangporfolio.pages.dev/project.html?slug=golf-clubhouse</loc><lastmod>2026-06-14</lastmod><priority>0.6</priority></url>
+  <url><loc>https://kevinwangporfolio.pages.dev/project.html?slug=pi-day-poster</loc><lastmod>2026-06-14</lastmod><priority>0.6</priority></url>
+  <url><loc>https://kevinwangporfolio.pages.dev/project.html?slug=one-percent-better</loc><lastmod>2026-06-14</lastmod><priority>0.6</priority></url>
+  <url><loc>https://kevinwangporfolio.pages.dev/project.html?slug=gill-lab-door</loc><lastmod>2026-06-14</lastmod><priority>0.6</priority></url>
+  <url><loc>https://kevinwangporfolio.pages.dev/project.html?slug=portfolio-layout</loc><lastmod>2026-06-14</lastmod><priority>0.6</priority></url>
+  <url><loc>https://kevinwangporfolio.pages.dev/project.html?slug=who-stole-my-shaomai</loc><lastmod>2026-06-14</lastmod><priority>0.6</priority></url>
+  <url><loc>https://kevinwangporfolio.pages.dev/project.html?slug=duyichu-3d</loc><lastmod>2026-06-14</lastmod><priority>0.6</priority></url>
+</urlset>

@@ -1,0 +1,11 @@
+# Netlify configuration.
+# You don't even need this for the drag-and-drop deploy (just drop the dist/
+# folder). It's here so that if you later connect this repo to Netlify via Git,
+# it builds and publishes automatically.
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
