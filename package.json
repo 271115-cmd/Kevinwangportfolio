@@ -13,7 +13,8 @@
     "@fontsource-variable/space-grotesk": "^5.2.10",
     "@fontsource/space-mono": "^5.2.5",
     "gsap": "^3.12.5",
-    "lenis": "^1.1.18"
+    "lenis": "^1.1.18",
+    "three": "^0.184.0"
   },
   "devDependencies": {
     "vite": "^7.3.1"

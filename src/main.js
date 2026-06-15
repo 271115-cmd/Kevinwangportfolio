@@ -25,3 +25,13 @@ refreshSoon();        // ScrollTrigger refresh after fonts/layout settle
 if (document.getElementById('read-app')) {
   import('./read.js').then((m) => m.initRead());
 }
+
+// Pattern Loom — only on loom.html
+if (document.getElementById('loom-app')) {
+  import('./loom.js').then((m) => m.initLoom());
+}
+
+// The Living Central Axis (WebGL) — only on axis.html
+if (document.getElementById('axis-canvas')) {
+  import('./axis.js').then((m) => m.initAxis());
+}

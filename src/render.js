@@ -9,6 +9,7 @@
 
 import { PROJECTS, byDiscipline, featured, labelFor, countFor } from './data/projects.js';
 import { coverFor, placeholderCover } from './data/placeholder.js';
+import { POSTS, postBySlug } from './data/journal.js';
 
 const pad2 = (n) => String(n).padStart(2, '0');
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) =>
@@ -142,14 +143,46 @@ function renderDetail(mount) {
       : '');
 }
 
-/* set the active page (for dropdown highlight + transition label) on the
-   detail route, where the discipline isn't known until we read ?slug=.
-   Call BEFORE mountChrome(). */
+/* ---- JOURNAL: list of field notes ---- */
+const fmtDate = (d) => String(d).replace(/-/g, '.');
+
+function renderJournal(mount) {
+  mount.classList.add('jr-list');
+  mount.innerHTML = POSTS.map((p) =>
+    `<a class="jr-row reveal" href="post.html?slug=${esc(p.slug)}" data-label="Journal">` +
+      `<span class="jr-date">${esc(fmtDate(p.date))}</span>` +
+      `<span class="jr-mid"><span class="jr-title">${esc(p.title)}</span><span class="jr-excerpt">${esc(p.excerpt)}</span></span>` +
+      `<span class="jr-tags">${(p.tags || []).map(esc).join(' · ')}</span>` +
+    `</a>`
+  ).join('');
+}
+
+/* ---- JOURNAL: a single post (post.html?slug=) ---- */
+function renderPost(mount) {
+  const p = postBySlug(slugParam());
+  if (!p) {
+    mount.innerHTML = '<p class="post-missing mono">Post not found — <a href="/journal.html">all field notes →</a></p>';
+    return;
+  }
+  document.title = `${p.title} — Kevin Wang`;
+  mount.innerHTML =
+    `<a class="post-back" href="/journal.html" data-label="Journal">← Field notes</a>` +
+    `<header class="post-head">` +
+      `<div class="post-meta">${esc(fmtDate(p.date))} <span class="accent">/</span> ${(p.tags || []).map(esc).join(' · ')}</div>` +
+      `<h1 class="post-title">${esc(p.title)}</h1>` +
+    `</header>` +
+    `<div class="post-body">${p.body}</div>`;  // body is trusted HTML authored in journal.js
+}
+
+/* set the active page (for dropdown highlight + transition label) on routes
+   where it isn't known until we read ?slug=. Call BEFORE mountChrome(). */
 export function resolveActivePage() {
-  const m = document.querySelector('[data-render="detail"]');
-  if (!m) return;
-  const p = PROJECTS.find((x) => x.id === slugParam());
-  document.body.dataset.page = p ? p.discipline : '';
+  if (document.querySelector('[data-render="detail"]')) {
+    const p = PROJECTS.find((x) => x.id === slugParam());
+    document.body.dataset.page = p ? p.discipline : '';
+  } else if (document.querySelector('[data-render="post"]')) {
+    document.body.dataset.page = 'journal';
+  }
 }
 
 export function hydratePage() {
@@ -160,6 +193,8 @@ export function hydratePage() {
     else if (kind === 'list') renderList(mount, slug);
     else if (kind === 'gallery') renderGallery(mount, slug);
     else if (kind === 'detail') renderDetail(mount);
+    else if (kind === 'journal') renderJournal(mount);
+    else if (kind === 'post') renderPost(mount);
   });
   // keep header counts in sync with the data
   document.querySelectorAll('[data-count-for]').forEach((el) => {

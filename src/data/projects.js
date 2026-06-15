@@ -12,7 +12,8 @@ export const DISCIPLINES = [
   { slug: 'graphic',      index: '03', label: 'Graphic',      blurb: 'Identity · print · type',      page: '/graphic.html' },
   { slug: 'objects',      index: '04', label: 'Objects',      blurb: 'Game & object design',         page: '/objects.html' },
   { slug: 'web',          index: '05', label: 'Web',          blurb: 'Interactive · digital',        page: '/web.html' },
-  { slug: 'about',        index: '06', label: 'About',        blurb: 'Bio · CV · contact',           page: '/about.html', isMeta: true },
+  { slug: 'journal',      index: '06', label: 'Journal',      blurb: 'Field notes',                  page: '/journal.html', isMeta: true },
+  { slug: 'about',        index: '07', label: 'About',        blurb: 'Bio · CV · contact',           page: '/about.html', isMeta: true },
 ];
 
 /* render style per discipline page: 'list' = editorial index rows,
@@ -98,10 +99,20 @@ export const PROJECTS = [
     gallery: ['/work/who-stole-my-shaomai/01.png', '/work/who-stole-my-shaomai/02.png', '/work/who-stole-my-shaomai/03.png', '/work/who-stole-my-shaomai/04.png', '/work/who-stole-my-shaomai/05.png'] },
 
   // ---------------- WEB ----------------
+  { id: 'the-living-central-axis', title: 'The Living Central Axis', discipline: 'web', year: 2026,
+    role: 'WebGL · scrollytelling', location: 'Beijing', tags: ['webgl', 'three.js', 'heritage', 'scrollytelling'],
+    summary: 'An interactive atlas of Beijing’s 7.8 km Central Axis — its 15 UNESCO World Heritage sites, cosmology, and seven centuries of history, travelled south to north.',
+    featured: true, external: null, app: '/axis.html', cover: '/work/the-living-central-axis/cover.jpg', gallery: [] },
+
   { id: 'read-this-building', title: 'Read This Building', discipline: 'web', year: 2026,
     role: 'AI · vision · web', location: '—', tags: ['ai', 'gemini', 'vision', 'critical'],
     summary: 'An AI that reads a building from a photo — style, elements, culture — then flags its own blind spots. A study in what AI sees, and misses, in architecture.',
     featured: true, external: null, app: '/read.html', cover: '/work/read-this-building/cover.jpg', gallery: [] },
+
+  { id: 'pattern-loom', title: 'Pattern Loom', discipline: 'web', year: 2026,
+    role: 'Generative · web', location: '—', tags: ['generative', 'svg', 'lattice', 'pattern'],
+    summary: 'A generative tool for Chinese lattice — ice-ray (冰裂), key-fret (回纹), tortoiseshell (龟背). Tweak, shuffle, and export print-ready SVG/PNG.',
+    featured: true, external: null, app: '/loom.html', cover: '/work/pattern-loom/cover.jpg', gallery: [] },
 
   // Duyichu = a SEPARATE, in-progress project — featured here as web work and
   // linked out. Replace `external` with the deployed URL once it ships, and drop

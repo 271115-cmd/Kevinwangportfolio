@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <title>The Living Central Axis — Kevin Wang</title>
+  <meta name="description" content="An interactive WebGL atlas of Beijing's Central Axis (北京中轴线) — its 15 UNESCO World Heritage sites, its cosmology, and seven centuries of history, travelled south to north. By Kevin Wang." />
+  <meta name="theme-color" content="#F4F1EA" />
+  <meta property="og:title" content="The Living Central Axis — an interactive atlas of Beijing's 北京中轴线" />
+  <meta property="og:description" content="Travel Beijing's 7.8 km axis: 15 World Heritage sites, the cosmology, the history — in WebGL." />
+  <meta property="og:image" content="/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:image" content="/og-image.png" />
+  <noscript><style>#page-transition{display:none!important}.reveal{opacity:1!important;transform:none!important}#site-dropdown{position:static!important}#axis-canvas{display:none!important}.axis-journey{height:auto!important}</style></noscript>
+</head>
+<body data-page="" data-year="2026">
+  <div id="page-transition" aria-hidden="true"><div class="pt-panel"><span class="pt-label"></span></div></div>
+  <div id="cursor" aria-hidden="true"></div>
+  <div id="cursor-text" aria-hidden="true"></div>
+
+  <header id="site-header"></header>
+  <div id="site-dropdown" hidden role="dialog" aria-modal="true" aria-label="Site index"></div>
+
+  <canvas id="axis-canvas" aria-hidden="true"></canvas>
+
+  <!-- fixed narration + progress (shown only while the journey is active) -->
+  <aside id="axis-narration" class="axis-narration" aria-live="polite">
+    <div class="an-idx mono"><span id="axis-idx">01 / 15</span></div>
+    <h2 class="an-en" id="axis-en">Yongdingmen</h2>
+    <div class="an-zh" id="axis-zh">永定门</div>
+    <div class="an-meta mono" id="axis-meta">Ming · 1553</div>
+    <p class="an-blurb" id="axis-blurb">The southern gate of the axis.</p>
+  </aside>
+  <div id="axis-rail" class="axis-rail" aria-hidden="true">
+    <span class="mono">SOUTH</span>
+    <div class="axis-bar-track"><div id="axis-bar" class="axis-bar"></div></div>
+    <span class="mono">NORTH</span>
+  </div>
+  <div id="axis-controls" class="axis-controls">
+    <button id="ground-toggle" class="ground-toggle" type="button" aria-pressed="false" aria-label="Toggle ground: massing or modern-city overlay">
+      <span class="gt-dot" aria-hidden="true"></span><span class="gt-label">Massing</span>
+    </button>
+  </div>
+
+  <main id="page" class="axis-page">
+    <!-- HERO -->
+    <section class="axis-hero bleed">
+      <div class="ax-eyebrow mono"><span class="accent">●</span> 北京中轴线 · UNESCO World Heritage 2024</div>
+      <h1 class="axis-title">The Living<br />Central Axis</h1>
+      <p class="axis-lead">7.8 kilometres. One line. For seven centuries Beijing has been ordered by a single
+        north–south axis — from the southern gate at <em class="accent">Yongdingmen</em> to the
+        <em class="accent">Bell Tower</em> in the north. In 2024 UNESCO inscribed it whole. Scroll to walk it.</p>
+      <div class="ax-cue mono">↓ scroll to travel the line — south to north</div>
+    </section>
+
+    <!-- JOURNEY: tall spacer; the fixed canvas + narration are driven by scroll -->
+    <section id="axis-journey" class="axis-journey" aria-label="The fifteen sites, south to north"></section>
+
+    <!-- COSMOLOGY -->
+    <section class="axis-section bleed">
+      <div class="section-head">
+        <span class="sh-index">02</span>
+        <h2 class="sh-title">The Order</h2>
+        <div class="sh-meta"><span>Why the line falls where it does</span><span class="accent">《考工记》· the ideal capital</span></div>
+      </div>
+      <div id="ax-cosmo" class="ax-cosmo"></div>
+    </section>
+
+    <!-- HISTORY -->
+    <section class="axis-section bleed">
+      <div class="section-head">
+        <span class="sh-index">03</span>
+        <h2 class="sh-title">Seven<br />Centuries</h2>
+        <div class="sh-meta"><span>Yuan → Ming → Qing → now</span><span class="accent">1267 — 2024</span></div>
+      </div>
+      <ol id="ax-timeline" class="ax-timeline"></ol>
+    </section>
+
+    <!-- UNESCO -->
+    <section class="axis-section bleed">
+      <div class="section-head">
+        <span class="sh-index">04</span>
+        <h2 class="sh-title">World<br />Heritage</h2>
+        <div class="sh-meta"><span id="ax-unesco-name">Inscribed 2024</span></div>
+      </div>
+      <div id="ax-unesco" class="ax-unesco"></div>
+      <h3 class="ax-sub mono">The fifteen components · south → north</h3>
+      <ol id="ax-components" class="ax-components"></ol>
+    </section>
+
+    <!-- SOURCES -->
+    <section class="axis-section bleed">
+      <h3 class="ax-sub mono">Sources</h3>
+      <ul id="ax-sources" class="ax-sources"></ul>
+      <p class="ax-disclaim mono">Inscription facts, the fifteen components, and the line’s history are sourced above.
+        Individual site dates are indicative; the cosmological reading draws on my own Central Axis studio
+        analysis — interpretation, not official record.</p>
+    </section>
+  </main>
+
+  <footer id="site-footer"></footer>
+
+  <nav class="static-nav" aria-label="Site">
+    <a href="/">Home</a><a href="/architecture.html">Architecture</a><a href="/models.html">Models</a><a href="/graphic.html">Graphic</a><a href="/objects.html">Objects</a><a href="/web.html">Web</a><a href="/journal.html">Journal</a><a href="/about.html">About</a>
+  </nav>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

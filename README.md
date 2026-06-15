@@ -49,6 +49,34 @@ An AI vision experiment: upload a building photo → Gemini returns a structured
 > ~1280px to keep calls cheap, and Gemini has a free tier — but if it gets traffic, add
 > **Cloudflare Turnstile** or a rate-limit rule in front of `/api/read-building`.
 
+## The Living Central Axis (`/axis.html`) — flagship
+
+An interactive WebGL atlas of Beijing's Central Axis (北京中轴线, UNESCO 2024): a
+**scroll-driven camera** travels the 15 sites south→north past **procedurally generated**
+white-model architecture (distinct per archetype — gate / tower / palace / temple / altar /
+…), with a live narration card, a progress rail, an icon-rich **component list** (click a
+row to fly there), a **massing ↔ modern-city ground toggle**, then content sections
+(cosmology, timeline, UNESCO facts, the 15 components, sources).
+
+**Architecture (`src/axis/`):** a deterministic, modular system — `state.js` is the single
+source of truth (scroll + UI mutate only it; camera/highlight/narration/UI all derive from
+it, so they never desync); `scene.js` owns Three.js and reacts only to state; `archetypes.js`
+builds grouped low-poly geometry from 3 shared materials; `segments.js` lazy-loads geometry in
+a window around the active site (cache + dispose); `ui.js` is fully decoupled from WebGL;
+`controller.js` is the bridge. Data + citations + the formal monument schema live in
+`src/data/axis.js`. Uses **three** (dynamic-import chunk — only loads on this page).
+Inscription facts are research-verified and cited; per-site dates are indicative (noted on-page).
+
+## Pattern Loom (`/loom.html`) & Journal (`/journal.html`)
+
+- **Pattern Loom** — a 100% client-side generative tool for Chinese lattice (冰裂 ice-ray,
+  回纹 key-fret, 龟背 tortoiseshell). **No API key or cost** (unlike the AI tool). Logic in
+  `src/loom.js`; exports print-ready **SVG** + a **2400px PNG**. Add motifs by extending the
+  generators there. Outputs are yours to sell as prints/downloads.
+- **Journal / Field Notes** — data-driven posts in `src/data/journal.js` (newest first; `body`
+  is HTML). Index at `journal.html`, each post at `post.html?slug=…`, linked in the dropdown.
+  The three seed posts are **drafts — rewrite them in your own voice.**
+
 ## Make it yours
 
 1. **Your identity** — edit `SITE` at the top of `src/chrome.js` (name, role, email,
