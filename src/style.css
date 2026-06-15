@@ -611,6 +611,47 @@ body.axis-active .axis-controls { opacity: 1; visibility: visible; }
 .ax-disclaim { margin-top: 1.5rem; opacity: .55; line-height: 1.5; text-transform: none; letter-spacing: .02em; max-width: 70ch; }
 
 /* ============================================================
+   CRAFT PASS — keyboard-focus parity + display word-spacing
+   All additive: mouse behavior, hover states, and the identity
+   are unchanged. :focus-visible only fires for keyboard users,
+   so mouse clicks never show a ring.
+   ============================================================ */
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+:focus:not(:focus-visible) { outline: none; }
+.read-note:focus-visible { outline: none; }     /* keeps its underline-accent focus */
+
+/* the big rows/cards mirror their :hover ink-invert on keyboard focus,
+   so keyboard users get the same affordance language as mouse users.
+   ring is inset (-3px) so it stays legible on the ink fill. */
+.dd-row:focus-visible,
+.proj-row:focus-visible,
+.feat-card:focus-visible,
+.jr-row:focus-visible,
+.detail-nav a:focus-visible,
+.comp-row:focus-visible { background: var(--ink); color: var(--paper); outline-offset: -3px; }
+.dd-row:focus-visible, .proj-row:focus-visible, .jr-row:focus-visible { padding-left: 1.4rem; }
+.comp-row:focus-visible { padding-left: .9rem; }
+.dd-row:focus-visible .dd-count { color: var(--accent); opacity: 1; }
+.feat-card:focus-visible .fc-cat { color: var(--accent); }
+.proj-row:focus-visible .pr-summary,
+.jr-row:focus-visible .jr-excerpt { opacity: 1; }
+.jr-row:focus-visible .jr-tags { color: var(--accent); }
+.comp-row:focus-visible .comp-yr { color: var(--accent); }
+.comp-row:focus-visible .comp-pair { color: var(--paper); border-color: var(--paper); }
+#menu-toggle:focus-visible .mt-glyph { background: var(--accent); border-color: var(--accent); color: var(--paper); }
+@media (min-width: 900px) { .proj-row:focus-visible .pr-thumb { opacity: 1; transform: translateY(-50%) scale(1); } }
+
+/* close the inter-word cavern on the largest negatively-tracked display
+   lockups (e.g. "SAY HELLO"); a no-op on single-word headings. */
+.hero-title,
+.section-head .sh-title,
+.detail-title,
+.foot-cta .fc-mail,
+.post-title,
+.axis-title,
+#page-transition .pt-label { word-spacing: -0.05em; }
+
+/* ============================================================
    REVEAL (ScrollTrigger) base states
    ============================================================ */
 .reveal { opacity: 0; transform: translateY(18px); }

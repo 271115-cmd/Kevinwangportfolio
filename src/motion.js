@@ -52,7 +52,11 @@ export function playHeroIntro() {
   splitChars(title);
   const chars = title.querySelectorAll('.hero-char');
   // from-hidden so the resting (post-anim / no-JS) state is VISIBLE — never stuck
-  gsap.from(chars, { yPercent: 110, duration: 0.8, ease: 'expo.out', stagger: 0.025, delay: 0.1 });
+  gsap.from(chars, {
+    yPercent: 110, duration: 0.8, ease: 'expo.out', stagger: 0.025, delay: 0.1,
+    // release the per-char GPU layers once the one-shot intro is done
+    onComplete: () => chars.forEach((c) => { c.style.willChange = 'auto'; }),
+  });
 
   // eyebrow + sub follow the title
   const after = document.querySelectorAll('.hero-eyebrow, .hero-sub');

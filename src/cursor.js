@@ -38,7 +38,10 @@ export function initCursor() {
 }
 
 function labelFor(el) {
+  if (el.matches('a[href^="mailto:"]')) return 'Email ↗';
+  if (el.matches('a[href^="tel:"]')) return 'Call ↗';
   if (el.matches('[data-no-transition][target="_blank"], a[target="_blank"]')) return 'Open ↗';
+  if (el.matches('.dd-row, .proj-row, .jr-row, .feat-card, .gal-item')) return 'Open';
   if (el.matches('a[href]')) return 'View';
   return 'View';
 }

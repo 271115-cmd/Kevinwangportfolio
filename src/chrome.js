@@ -41,9 +41,10 @@ function headerHTML() {
 function dropdownHTML(activePage) {
   const rows = DISCIPLINES.map((d) => {
     const active = d.slug === activePage ? ' is-active' : '';
+    const current = d.slug === activePage ? ' aria-current="page"' : '';
     const count = d.isMeta ? '' : `<span class="dd-count">(${countFor(d.slug)})</span>`;
     return (
-      `<a class="dd-row${active}" href="${esc(d.page)}" data-slug="${esc(d.slug)}" data-label="${esc(d.label)}">` +
+      `<a class="dd-row${active}"${current} href="${esc(d.page)}" data-slug="${esc(d.slug)}" data-label="${esc(d.label)}">` +
         `<span class="dd-index">${esc(d.index)}</span>` +
         `<span class="dd-mask"><span class="dd-label">${esc(d.label)}</span></span>` +
         count +
