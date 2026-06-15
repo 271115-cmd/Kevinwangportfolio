@@ -24,6 +24,18 @@ function badge(p) {
   return p.external ? '<span class="pr-badge">↗ External</span>' : '';
 }
 
+/* count-aware 12-col span rhythm so a grid always fills its rows and never
+   floats a lone cell against empty columns (Objects has 1 item, Models 2).
+   Returns one span (4/6/8/12) per item; shared by galleries + detail plates. */
+function spanRhythm(n) {
+  const PRESET = { 0: [], 1: [12], 2: [6, 6], 3: [12, 6, 6], 4: [8, 4, 4, 8], 5: [8, 4, 4, 8, 12], 6: [6, 6, 8, 4, 4, 8] };
+  if (PRESET[n]) return PRESET[n];
+  const out = [];
+  for (let i = 0; i < n; i++) { const flip = Math.floor(i / 2) % 2; out.push(i % 2 === 0 ? (flip ? 4 : 8) : (flip ? 8 : 4)); }
+  if (n % 2 === 1) out[n - 1] = 12;   // a lone trailing cell becomes a full-bleed moment
+  return out;
+}
+
 /* ---- HOME: featured grid ---- */
 function renderFeatured(mount) {
   const items = featured();
@@ -34,8 +46,9 @@ function renderFeatured(mount) {
     const ext = !!p.external;
     const href = ext ? p.external : (p.app || detailHref(p));
     const tgt = ext ? ' target="_blank" rel="noopener" data-no-transition' : ` data-label="${esc(cat)}"`;
+    const wide = (i + 1) % 3 === 0 ? ' feat-card--wide' : '';   // every 3rd is the full-bleed editorial unit
     return (
-      `<a class="feat-card reveal" data-magnetic href="${esc(href)}"${tgt}>` +
+      `<a class="feat-card${wide} reveal" data-magnetic href="${esc(href)}"${tgt}>` +
         `<div class="fc-top"><span class="fc-cat">${esc(cat)}</span><span class="fc-num">F/${pad2(i + 1)}</span></div>` +
         `<img class="fc-cover" src="${cover}" alt="${esc(p.title)} — ${esc(cat)}" loading="lazy">` +
         `<h3 class="fc-title">${esc(p.title)}</h3>` +
@@ -73,19 +86,22 @@ function renderList(mount, slug) {
 function renderGallery(mount, slug) {
   const items = byDiscipline(slug);
   const cat = labelFor(slug);
+  const spans = spanRhythm(items.length);
   mount.classList.add('gallery');
   mount.innerHTML = items.map((p, i) => {
-    const wide = i % 3 === 0 ? ' wide' : '';
     const cover = coverFor(p, pad2(i + 1), cat);
     const ext = !!p.external;
     const attrs = ext
       ? `href="${esc(p.external)}" target="_blank" rel="noopener" data-no-transition`
       : `href="${esc(p.app || detailHref(p))}" data-label="${esc(cat)}"`;
     return (
-      `<a class="gal-item${wide} reveal" data-magnetic ${attrs}>` +
+      `<a class="gal-item reveal" data-span="${spans[i]}" data-magnetic ${attrs}>` +
         `<img src="${cover}" alt="${esc(p.title)} — ${esc(cat)}" loading="lazy">` +
-        `<figcaption class="gi-cap"><span>${pad2(i + 1)} · ${esc(p.title)}</span>` +
-          `<span>${ext ? '↗' : esc(p.year)}</span></figcaption>` +
+        `<figcaption class="gi-cap">` +
+          `<span class="gi-id">${pad2(i + 1)}</span>` +
+          `<span class="gi-title">${esc(p.title)}</span>` +
+          `<span class="gi-meta">${ext ? '↗ External' : `${esc(p.role)} · ${esc(p.year)}`}</span>` +
+        `</figcaption>` +
       `</a>`
     );
   }).join('');
@@ -107,21 +123,27 @@ function renderDetail(mount) {
   const prev = sibs[(i - 1 + sibs.length) % sibs.length];
   const next = sibs[(i + 1) % sibs.length];
 
-  // plates: real gallery if present, else generated placeholders
-  const plates = (p.gallery && p.gallery.length)
-    ? p.gallery.map((src, n) => ({ src, n }))
-    : [0, 1, 2].map((n) => ({ src: placeholderCover({ index: pad2(n + 1), label: cat, seed: `${p.id}-${n}` }), n }));
+  // lead image — real cover or generated brutalist placeholder
+  const hero = coverFor(p, '00', cat);
 
-  const metaRow = (k, v) => (v && v !== '—') ? `<span><span class="dm-k">${k}</span>${esc(v)}</span>` : '';
-  const tags = p.tags?.length ? `<span><span class="dm-k">Tags</span>${p.tags.map(esc).join(', ')}</span>` : '';
+  // plates: real gallery if present, else generated placeholders
+  const placeholderPlates = !(p.gallery && p.gallery.length);
+  const plates = placeholderPlates
+    ? [0, 1, 2].map((n) => ({ src: placeholderCover({ index: pad2(n + 1), label: cat, seed: `${p.id}-${n}` }), n }))
+    : p.gallery.map((src, n) => ({ src, n }));
+  const plateSpans = spanRhythm(plates.length);
+
+  // spec sheet — one row per known fact; absent/em-dash fields silently drop
+  const specRow = (k, v) => (v && v !== '—') ? `<li><span class="ds-k">${k}</span><span class="ds-v">${esc(v)}</span></li>` : '';
+  const tagRow = p.tags?.length ? `<li><span class="ds-k">Tags</span><span class="ds-v">${p.tags.map(esc).join(', ')}</span></li>` : '';
   const visit = p.external
     ? `<a class="detail-visit" data-magnetic href="${esc(p.external)}" target="_blank" rel="noopener" data-no-transition>Visit live site ↗</a>`
     : '';
 
-  const platesHtml = plates.map((pl) =>
-    `<figure class="detail-plate reveal">` +
+  const platesHtml = plates.map((pl, idx) =>
+    `<figure class="detail-plate reveal" data-span="${plateSpans[idx]}">` +
       `<img src="${pl.src}" alt="${esc(p.title)} — plate ${pad2(pl.n + 1)}" loading="lazy">` +
-      `<figcaption class="dp-cap">Plate ${pad2(pl.n + 1)}${p.cover || (p.gallery && p.gallery.length) ? '' : ' · placeholder'}</figcaption>` +
+      `<figcaption class="dp-cap">Plate ${pad2(pl.n + 1)}${placeholderPlates ? ' · placeholder' : ''}</figcaption>` +
     `</figure>`
   ).join('');
 
@@ -133,10 +155,18 @@ function renderDetail(mount) {
     `<header class="detail-head">` +
       `<div class="detail-eyebrow mono">${esc(cat)} <span class="accent">/</span> ${esc(p.year)}</div>` +
       `<h1 class="detail-title">${esc(p.title)}</h1>` +
-      `<div class="detail-meta">${metaRow('Role', p.role)}${metaRow('Year', p.year)}${metaRow('Where', p.location)}${tags}</div>` +
-      `<p class="detail-summary">${esc(p.summary)}</p>` +
-      visit +
+      `<div class="detail-headgrid">` +
+        `<div class="detail-lead">` +
+          `<p class="detail-summary">${esc(p.summary)}</p>` +
+          visit +
+        `</div>` +
+        `<aside class="detail-spec">` +
+          `<h3 class="ds-h mono">Project</h3>` +
+          `<ul>${specRow('Role', p.role)}${specRow('Year', p.year)}${specRow('Where', p.location)}${tagRow}</ul>` +
+        `</aside>` +
+      `</div>` +
     `</header>` +
+    `<figure class="detail-hero reveal"><img src="${hero}" alt="${esc(p.title)} — ${esc(cat)}" loading="lazy"></figure>` +
     `<div class="detail-gallery">${platesHtml}</div>` +
     (sibs.length > 1
       ? `<nav class="detail-nav" aria-label="More ${esc(cat)}">${navLink(prev, '← Prev')}${navLink(next, 'Next →')}</nav>`
@@ -199,5 +229,8 @@ export function hydratePage() {
   // keep header counts in sync with the data
   document.querySelectorAll('[data-count-for]').forEach((el) => {
     el.textContent = pad2(countFor(el.getAttribute('data-count-for')));
+  });
+  document.querySelectorAll('[data-count-total]').forEach((el) => {
+    el.textContent = PROJECTS.length;
   });
 }
