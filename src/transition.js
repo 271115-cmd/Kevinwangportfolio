@@ -41,7 +41,7 @@ export function initTransition() {
     if (label) label.textContent = currentLabel();
     gsap.set(panel, { yPercent: 0 });
     gsap.to(panel, {
-      yPercent: -100, duration: 0.85, ease: 'expo.inOut', delay: 0.05,
+      yPercent: -100, duration: 1.0, ease: 'power3.inOut', delay: 0.06,
       onComplete: () => { ov.style.display = 'none'; },
     });
   };
@@ -76,7 +76,7 @@ export function initTransition() {
     gsap.killTweensOf(panel);
     gsap.fromTo(panel,
       { yPercent: 100 },
-      { yPercent: 0, duration: 0.6, ease: 'expo.inOut', onComplete: () => go(a.href) });
-    setTimeout(() => go(a.href), 1100);                       // fallback
+      { yPercent: 0, duration: 0.7, ease: 'power3.inOut', onComplete: () => go(a.href) });
+    setTimeout(() => go(a.href), 1300);                       // fallback
   });
 }

@@ -7,7 +7,7 @@
 import gsap from 'gsap';
 
 const MAG_RADIUS = 90;
-const MAG_STRENGTH = 0.32;
+const MAG_STRENGTH = 0.22;   // calmer pull — restraint over spring
 
 export function initCursor() {
   const cursor = document.getElementById('cursor');
@@ -57,7 +57,7 @@ function bindInteractive(cursor, cursorText) {
     el.addEventListener('mouseleave', () => {
       cursor.classList.remove('hovering');
       cursorText?.classList.remove('visible');
-      if (el.hasAttribute('data-magnetic')) gsap.to(el, { x: 0, y: 0, duration: 0.5, ease: 'elastic.out(1, 0.3)' });
+      if (el.hasAttribute('data-magnetic')) gsap.to(el, { x: 0, y: 0, duration: 0.6, ease: 'power3.out' });
     });
 
     if (el.hasAttribute('data-magnetic')) {

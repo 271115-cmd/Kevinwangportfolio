@@ -16,7 +16,8 @@ export const getLenis = () => lenis;
 
 export function initLenis() {
   if (reduced) return;            // honour reduced-motion: native scroll
-  lenis = new Lenis({ duration: 1.1, smoothWheel: true });
+  // longer cubic glide — the tactile signature of the promenade
+  lenis = new Lenis({ duration: 1.35, smoothWheel: true, easing: (t) => 1 - Math.pow(1 - t, 3) });
   lenis.on('scroll', ScrollTrigger.update);
   gsap.ticker.add((t) => lenis.raf(t * 1000));
   gsap.ticker.lagSmoothing(0);
@@ -46,9 +47,18 @@ function splitChars(root) {
 }
 
 export function playHeroIntro() {
+  if (reduced) return;            // CSS neutralises the start transform
+
+  // the quiet index — a calm per-row fade-up (no char-split; too loud for a serif)
+  const rows = document.querySelectorAll('.index-row');
+  if (rows.length) {
+    gsap.from(rows, { opacity: 0, y: 18, duration: 0.9, ease: 'power3.out', stagger: 0.12, delay: 0.15 });
+    gsap.from('.index-sub', { opacity: 0, duration: 0.8, ease: 'power2.out', delay: 0.15 + rows.length * 0.12 });
+    return;
+  }
+
   const title = document.querySelector('.hero-title');
   if (!title) return;
-  if (reduced) return;            // CSS neutralises the start transform
   splitChars(title);
   const chars = title.querySelectorAll('.hero-char');
   // from-hidden so the resting (post-anim / no-JS) state is VISIBLE — never stuck
@@ -64,15 +74,22 @@ export function playHeroIntro() {
 }
 
 export function initReveals() {
+  const plates = gsap.utils.toArray('.reveal-plate');
   const els = gsap.utils.toArray('.reveal');
-  if (!els.length) return;
-  if (reduced) { els.forEach((e) => e.classList.add('is-in')); return; }
-  ScrollTrigger.batch('.reveal', {
-    start: 'top 90%',
-    once: true,
-    onEnter: (batch) => gsap.to(batch, {
-      opacity: 1, y: 0, duration: 0.8, ease: 'power3.out', stagger: 0.08, overwrite: true,
-    }),
+  if (reduced) {
+    els.forEach((e) => e.classList.add('is-in'));
+    plates.forEach((e) => e.classList.add('is-in'));
+    return;
+  }
+  // text/blocks settle from shadow into light
+  if (els.length) ScrollTrigger.batch('.reveal', {
+    start: 'top 88%', once: true,
+    onEnter: (batch) => gsap.to(batch, { opacity: 1, y: 0, duration: 1.0, ease: 'power2.out', stagger: 0.12, overwrite: true }),
+  });
+  // images: light fills the wall (clip-path wipe, driven by CSS .is-in)
+  if (plates.length) ScrollTrigger.batch('.reveal-plate', {
+    start: 'top 90%', once: true,
+    onEnter: (batch) => batch.forEach((el, i) => setTimeout(() => el.classList.add('is-in'), i * 110)),
   });
 }
 

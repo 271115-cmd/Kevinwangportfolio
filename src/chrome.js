@@ -29,7 +29,7 @@ const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) =>
 function headerHTML() {
   return (
     `<a class="brand" href="/" data-magnetic aria-label="${esc(SITE.name)} — home">` +
-      `<span class="brand-mark">◣</span>${esc(SITE.name)}` +
+      `${esc(SITE.name)}` +
       `<span class="brand-sub">${esc(SITE.edition)}</span>` +
     `</a>` +
     `<button id="menu-toggle" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="site-dropdown">` +
@@ -68,7 +68,7 @@ function footerHTML() {
   return (
     `<div class="foot-cta">` +
       `<div class="fc-label">Let’s build something —</div>` +
-      `<a class="fc-mail" href="mailto:${esc(SITE.email)}" data-magnetic data-no-transition>Say hello ↗</a>` +
+      `<a class="fc-mail" href="mailto:${esc(SITE.email)}" data-magnetic data-no-transition>Get in touch</a>` +
       `<a class="fc-email" href="mailto:${esc(SITE.email)}" data-no-transition>${esc(SITE.email)}</a>` +
     `</div>` +
     `<div class="foot-meta">` +
@@ -95,6 +95,16 @@ export function mountChrome() {
     const scrim = document.createElement('div');
     scrim.id = 'dd-scrim';
     document.body.appendChild(scrim);
+  }
+
+  // shared fixed reveal-plate for the index + list pages (light fills a wall)
+  if (!document.getElementById('index-plate')) {
+    const plate = document.createElement('div');
+    plate.id = 'index-plate';
+    plate.className = 'index-plate';
+    plate.setAttribute('aria-hidden', 'true');
+    plate.innerHTML = '<img alt="">';
+    document.body.appendChild(plate);
   }
 
   // remove the no-JS fallback nav now that the real chrome is mounted

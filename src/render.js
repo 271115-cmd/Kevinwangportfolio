@@ -7,7 +7,7 @@
      <article data-render="detail"></article>      (project.html?slug=…)
    ============================================================ */
 
-import { PROJECTS, byDiscipline, featured, labelFor, countFor } from './data/projects.js';
+import { PROJECTS, DISCIPLINES, byDiscipline, featured, labelFor, countFor } from './data/projects.js';
 import { coverFor, placeholderCover } from './data/placeholder.js';
 import { POSTS, postBySlug } from './data/journal.js';
 
@@ -36,7 +36,27 @@ function spanRhythm(n) {
   return out;
 }
 
-/* ---- HOME: featured grid ---- */
+/* ---- HOME: the quiet index — the five work disciplines, revealed on
+   hover/focus via the shared fixed plate. Same gesture as the dropdown. ---- */
+function renderIndex(mount) {
+  const work = DISCIPLINES.filter((d) => !d.isMeta);
+  mount.classList.add('index');
+  mount.innerHTML = work.map((d, i) => {
+    const items = byDiscipline(d.slug);
+    const lead = items.find((p) => p.featured) || items[0];
+    const cover = lead ? coverFor(lead, pad2(i + 1), d.label) : '';
+    const n = items.length;
+    return (
+      `<a class="index-row" href="${esc(d.page)}" data-slug="${esc(d.slug)}" data-label="${esc(d.label)}" data-cover="${esc(cover)}">` +
+        `<span class="ix-num">${esc(d.index)}</span>` +
+        `<span class="ix-name">${esc(d.label)}</span>` +
+        `<span class="ix-count">${n} ${n === 1 ? 'work' : 'works'}</span>` +
+      `</a>`
+    );
+  }).join('');
+}
+
+/* ---- HOME: featured grid (legacy; superseded by the index) ---- */
 function renderFeatured(mount) {
   const items = featured();
   mount.classList.add('feat-grid');
@@ -71,12 +91,11 @@ function renderList(mount, slug) {
       ? `href="${esc(p.external)}" target="_blank" rel="noopener" data-no-transition`
       : `href="${esc(p.app || detailHref(p))}" data-label="${esc(cat)}"`;
     return (
-      `<a class="proj-row reveal" ${attrs}>` +
+      `<a class="proj-row" data-cover="${esc(cover)}" ${attrs}>` +
         `<span class="pr-index">${pad2(i + 1)}</span>` +
         `<span class="pr-title">${esc(p.title)}</span>` +
         `<span class="pr-summary">${esc(p.summary)}</span>` +
         `<span class="pr-meta">${esc(p.role)} · ${esc(p.year)} ${badge(p)}</span>` +
-        `<img class="pr-thumb" src="${cover}" alt="" aria-hidden="true" loading="lazy">` +
       `</a>`
     );
   }).join('');
@@ -95,7 +114,7 @@ function renderGallery(mount, slug) {
       ? `href="${esc(p.external)}" target="_blank" rel="noopener" data-no-transition`
       : `href="${esc(p.app || detailHref(p))}" data-label="${esc(cat)}"`;
     return (
-      `<a class="gal-item reveal" data-span="${spans[i]}" data-magnetic ${attrs}>` +
+      `<a class="gal-item reveal-plate" data-span="${spans[i]}" data-magnetic ${attrs}>` +
         `<img src="${cover}" alt="${esc(p.title)} — ${esc(cat)}" loading="lazy">` +
         `<figcaption class="gi-cap">` +
           `<span class="gi-id">${pad2(i + 1)}</span>` +
@@ -141,7 +160,7 @@ function renderDetail(mount) {
     : '';
 
   const platesHtml = plates.map((pl, idx) =>
-    `<figure class="detail-plate reveal" data-span="${plateSpans[idx]}">` +
+    `<figure class="detail-plate reveal-plate" data-span="${plateSpans[idx]}">` +
       `<img src="${pl.src}" alt="${esc(p.title)} — plate ${pad2(pl.n + 1)}" loading="lazy">` +
       `<figcaption class="dp-cap">Plate ${pad2(pl.n + 1)}${placeholderPlates ? ' · placeholder' : ''}</figcaption>` +
     `</figure>`
@@ -166,7 +185,7 @@ function renderDetail(mount) {
         `</aside>` +
       `</div>` +
     `</header>` +
-    `<figure class="detail-hero reveal"><img src="${hero}" alt="${esc(p.title)} — ${esc(cat)}" loading="lazy"></figure>` +
+    `<figure class="detail-hero reveal-plate"><img src="${hero}" alt="${esc(p.title)} — ${esc(cat)}" loading="lazy"></figure>` +
     `<div class="detail-gallery">${platesHtml}</div>` +
     (sibs.length > 1
       ? `<nav class="detail-nav" aria-label="More ${esc(cat)}">${navLink(prev, '← Prev')}${navLink(next, 'Next →')}</nav>`
@@ -219,7 +238,8 @@ export function hydratePage() {
   document.querySelectorAll('[data-render]').forEach((mount) => {
     const kind = mount.getAttribute('data-render');
     const slug = mount.getAttribute('data-slug');
-    if (kind === 'featured') renderFeatured(mount);
+    if (kind === 'index') renderIndex(mount);
+    else if (kind === 'featured') renderFeatured(mount);
     else if (kind === 'list') renderList(mount, slug);
     else if (kind === 'gallery') renderGallery(mount, slug);
     else if (kind === 'detail') renderDetail(mount);

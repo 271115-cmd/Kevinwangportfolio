@@ -35,3 +35,8 @@ if (document.getElementById('loom-app')) {
 if (document.getElementById('axis-canvas')) {
   import('./axis.js').then((m) => m.initAxis());
 }
+
+// Quiet index reveal — home index + discipline list pages (deferred plate)
+if (document.querySelector('[data-render="index"], [data-render="list"]')) {
+  import('./index-reveal.js').then((m) => m.initIndexReveal());
+}

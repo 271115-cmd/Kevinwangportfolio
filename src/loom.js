@@ -81,10 +81,10 @@ function tortoise(radius) {
 }
 
 const PALETTES = {
-  ink:       { fg: '#111110', bg: '#F4F1EA' },
-  accent:    { fg: '#FF3B00', bg: '#F4F1EA' },
-  invert:    { fg: '#F4F1EA', bg: '#111110' },
-  accentink: { fg: '#FF3B00', bg: '#111110' },
+  ink:       { fg: '#1A1A18', bg: '#EDEAE3' },   // sumi ink on concrete (default)
+  accent:    { fg: '#6E6A60', bg: '#EDEAE3' },   // patina/clay on concrete
+  invert:    { fg: '#EDEAE3', bg: '#1A1A18' },
+  accentink: { fg: '#6E6A60', bg: '#1A1A18' },   // patina on ink
 };
 
 function buildSVG(s) {
