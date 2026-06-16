@@ -13,8 +13,8 @@ export const xForSide = (side, scale = 3) =>
   side === 'east' ? 9 + scale : side === 'west' ? -(9 + scale) : 0;
 
 export const COLORS = {
-  paper: 0xEDEAE3,
-  paper2: 0xE3DFD6,
+  paper: 0xFFFFFF,
+  paper2: 0xF2F2F1,
   ink: 0x1A1A18,
   accent: 0x6E6A60,   // patina — the single muted tone (axis line + active site)
 };

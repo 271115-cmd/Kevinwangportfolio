@@ -6,7 +6,7 @@
    ============================================================ */
 
 :root {
-  --paper: #F6F4EF;   /* warm near-white */
+  --paper: #FFFFFF;   /* pure white — the primary surface */
   --ink:   #19160F;   /* warm near-black */
   --line:  rgba(25, 22, 15, 0.20);
   --font:  'Times New Roman', Times, 'Songti SC', 'Noto Serif CJK SC', serif;
@@ -16,7 +16,7 @@
   /* legacy aliases so any stray reference resolves quietly */
   --accent: var(--ink); --hairline: var(--line); --font-display: var(--font);
   --font-sans: var(--font); --font-mono: var(--font); --font-serif-em: var(--font);
-  --paper-2: #ECE9E2; --ink-soft: #6B6557; --ink-mid: #2A271F; --patina: #6B6557;
+  --paper-2: #F2F2F1; --ink-soft: #6B6557; --ink-mid: #2A271F; --patina: #6B6557;
   --ease: ease;
 }
 
