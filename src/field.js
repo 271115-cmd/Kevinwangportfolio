@@ -120,8 +120,12 @@ export function initField() {
   wrap.addEventListener('pointercancel', end);
   field.addEventListener('click', (e) => { if (moved > 6) { e.preventDefault(); e.stopPropagation(); } }, true);
 
-  /* wheel / trackpad zoom toward the cursor */
-  wrap.addEventListener('wheel', (e) => { e.preventDefault(); zoomAt(e.clientX, e.clientY, e.deltaY < 0 ? 1.12 : 1 / 1.12); }, { passive: false });
+  /* trackpad / wheel: scroll = walk around (pan); pinch or ctrl+wheel = zoom */
+  wrap.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    if (e.ctrlKey) zoomAt(e.clientX, e.clientY, e.deltaY < 0 ? 1.08 : 1 / 1.08);
+    else { txT -= e.deltaX; tyT -= e.deltaY; vx = vy = 0; }
+  }, { passive: false });
 
   /* controls */
   wrap.querySelectorAll('[data-z]').forEach((b) => b.addEventListener('click', () => {
