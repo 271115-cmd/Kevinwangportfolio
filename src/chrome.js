@@ -97,15 +97,6 @@ export function mountChrome() {
     document.body.appendChild(scrim);
   }
 
-  // shared fixed reveal-plate for the index + list pages (light fills a wall)
-  if (!document.getElementById('index-plate')) {
-    const plate = document.createElement('div');
-    plate.id = 'index-plate';
-    plate.className = 'index-plate';
-    plate.setAttribute('aria-hidden', 'true');
-    plate.innerHTML = '<img alt="">';
-    document.body.appendChild(plate);
-  }
 
   // remove the no-JS fallback nav now that the real chrome is mounted
   document.querySelectorAll('.static-nav').forEach((n) => n.remove());

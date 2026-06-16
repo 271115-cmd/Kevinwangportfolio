@@ -8,14 +8,12 @@ import './style.css';
 import { initTransition } from './transition.js';
 import { mountChrome } from './chrome.js';
 import { hydratePage, resolveActivePage } from './render.js';
-import { initCursor } from './cursor.js';
 import { initLenis, initReveals, playHeroIntro, refreshSoon } from './motion.js';
 
 resolveActivePage();  // detail route: derive active discipline from ?slug= first
 initTransition();     // reveal cover already up — wire reveal + click-intercept
 mountChrome();        // inject header + dropdown + footer; init dropdown
 hydratePage();        // render featured/list/gallery from projects.js
-initCursor();         // cursor + magnetic on the now-final DOM
 initLenis();          // smooth scroll
 playHeroIntro();      // char-mask hero (home only)
 initReveals();        // scroll reveals
@@ -36,7 +34,7 @@ if (document.getElementById('axis-canvas')) {
   import('./axis.js').then((m) => m.initAxis());
 }
 
-// Quiet index reveal — home index + discipline list pages (deferred plate)
-if (document.querySelector('[data-render="index"], [data-render="list"]')) {
-  import('./index-reveal.js').then((m) => m.initIndexReveal());
+// The field — home only (walk around the scattered work)
+if (document.getElementById('field-wrap')) {
+  import('./field.js').then((m) => m.initField());
 }
