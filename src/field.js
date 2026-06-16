@@ -32,8 +32,8 @@ export function initField() {
   const items = collectImages();
   if (!items.length) return;
 
-  const WORLD = { w: 2800, h: 1900 };
-  const MIN = 0.42, MAX = 2.6;
+  const WORLD = { w: 3400, h: 2300 };
+  const MIN = 0.34, MAX = 2.6;
 
   let seed = 7;
   const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
@@ -43,12 +43,25 @@ export function initField() {
   if (idx) idx.addEventListener('click', () => document.getElementById('menu-toggle')?.click());
 
   function place() {
+    const n = items.length;
+    const cols = Math.max(1, Math.round(Math.sqrt(n * (WORLD.w / WORLD.h))));
+    const rows = Math.ceil(n / cols);
+    const cellW = WORLD.w / cols, cellH = WORLD.h / rows;
+    const GAP = Math.min(cellW, cellH) * 0.2;                 // breathing room between cells
+    const maxW = Math.min(cellW - GAP, (cellH - GAP) / 1.55); // fit even a tall portrait
+
+    // one image per cell (exclusive → no overlap), assigned in a shuffled order
+    const order = items.map((_, i) => i);
+    for (let i = order.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
+
     field.style.width = WORLD.w + 'px';
     field.style.height = WORLD.h + 'px';
-    field.innerHTML = items.map((it) => {
-      const w = 96 + Math.round(rnd() * 150);                 // 96..246px
-      const x = Math.round(rnd() * (WORLD.w - w));
-      const y = Math.round(rnd() * (WORLD.h - 180));
+    field.innerHTML = order.map((idx, slot) => {
+      const it = items[idx];
+      const col = slot % cols, row = Math.floor(slot / cols);
+      const w = Math.round(maxW * (0.6 + rnd() * 0.36));      // varied size within the cell budget
+      const x = Math.round(col * cellW + GAP / 2 + rnd() * Math.max(0, cellW - w - GAP));
+      const y = Math.round(row * cellH + GAP / 2 + rnd() * Math.max(0, cellH - w * 1.55 - GAP));
       const tgt = it.ext ? ' target="_blank" rel="noopener" data-no-transition' : ' data-label=""';
       return `<a class="field-img" href="${esc(it.href)}"${tgt} style="left:${x}px;top:${y}px;width:${w}px">` +
         `<img src="${esc(it.src)}" alt="${esc(it.title)}" loading="lazy" draggable="false">` +
