@@ -1,21 +1,25 @@
 /* ============================================================
-   PORTFOLIO — restraint. After loicsutter.ch / Stille.
-   System Times. Black on white. One size. No hierarchy.
-   The work is a field you walk around. The design disappears;
-   the photographs and the act of looking are the whole thing.
+   PORTFOLIO — "cultural interfaces". Restraint, made architectural.
+   A neutral grotesk + mono, leaning mono — a measuring instrument,
+   not a typeface flourish. Black on white. One size. The work is a
+   measured field you survey. Design recedes; the work remains.
    ============================================================ */
+
+@import '@fontsource-variable/geist';
+@import '@fontsource-variable/geist-mono';
 
 :root {
   --paper: #FFFFFF;   /* pure white — the primary surface */
   --ink:   #19160F;   /* warm near-black */
   --line:  rgba(25, 22, 15, 0.20);
-  --font:  'Times New Roman', Times, 'Songti SC', 'Noto Serif CJK SC', serif;
-  --fs:    clamp(1rem, 1.05vw, 1.18rem);   /* the one size */
+  --font:      'Geist Variable', system-ui, -apple-system, 'PingFang SC', 'Noto Sans CJK SC', sans-serif;
+  --font-mono: 'Geist Mono Variable', ui-monospace, 'SFMono-Regular', monospace;
+  --fs:    clamp(0.98rem, 1vw, 1.12rem);   /* the one size */
   --pad:   clamp(1rem, 3vw, 2.4rem);
   --header-h: 56px;
   /* legacy aliases so any stray reference resolves quietly */
   --accent: var(--ink); --hairline: var(--line); --font-display: var(--font);
-  --font-sans: var(--font); --font-mono: var(--font); --font-serif-em: var(--font);
+  --font-sans: var(--font); --font-serif-em: var(--font);
   --paper-2: #F2F2F1; --ink-soft: #6B6557; --ink-mid: #2A271F; --patina: #6B6557;
   --ease: ease;
 }
@@ -46,7 +50,17 @@ button:hover { text-decoration: underline; text-underline-offset: 0.18em; }
 h1, h2, h3, h4 { font-weight: normal; font-size: inherit; line-height: 1.2; }
 
 /* one size everywhere — these helpers just normalise */
-.mono, .display { font-family: var(--font); font-size: var(--fs); font-weight: normal; text-transform: none; letter-spacing: 0; line-height: 1.2; }
+.display { font-family: var(--font); font-size: var(--fs); font-weight: normal; line-height: 1.2; }
+/* the mono "instrument" layer — labels, controls, coordinates, numbers, meta */
+.mono, .field-corner, .field-cursor, .fi-cap,
+.section-head .sh-meta, .section-head .sh-index,
+.dd-index, .dd-count, .pr-index, .pr-meta, .gi-cap, .dp-cap,
+.detail-eyebrow, .detail-spec .ds-k, .detail-spec .ds-v,
+.jr-date, .jr-tags, .post-meta, .comp-idx, .comp-zh, .comp-yr,
+.an-idx, .an-meta, .tl-label, .u-k, .foot-meta, .loom-label,
+.read-samples-label, .ax-eyebrow, .ax-cue, .ax-sub, .ax-disclaim {
+  font-family: var(--font-mono); font-size: 0.84em; letter-spacing: 0.01em;
+}
 
 .bleed { width: 100%; padding-inline: var(--pad); }
 .rule-top { border-top: 1px solid var(--line); }
@@ -108,7 +122,10 @@ body.dd-open #dd-scrim { pointer-events: auto; }
    ============================================================ */
 #field-wrap { position: fixed; inset: 0; overflow: hidden; background: var(--paper); cursor: grab; touch-action: none; z-index: 1; user-select: none; -webkit-user-select: none; }
 #field-wrap.grabbing { cursor: grabbing; }
-#field { position: absolute; top: 0; left: 0; transform-origin: 0 0; will-change: transform; }
+#field { position: absolute; top: 0; left: 0; transform-origin: 0 0; will-change: transform;
+  background-image: linear-gradient(rgba(25,22,15,.045) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(25,22,15,.045) 1px, transparent 1px);
+  background-size: 100px 100px; }
 .field-img { position: absolute; display: block; }
 .field-img img { display: block; width: 100%; height: auto; background: var(--paper-2); }
 .field-img .fi-cap { position: absolute; left: 0; top: 100%; margin-top: 3px; white-space: nowrap; opacity: 0; transition: opacity .15s; pointer-events: none; }
