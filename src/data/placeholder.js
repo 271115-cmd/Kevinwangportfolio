@@ -11,13 +11,12 @@
 let TOKENS = null;
 function tokens() {
   if (TOKENS) return TOKENS;
+  const FB = { mat: '#F2F2F1', inkSoft: '#6B6557', line: 'rgba(25,22,15,0.20)' };
+  // Node (build-time prerender) has no document — use the token fallbacks.
+  if (typeof document === 'undefined' || typeof getComputedStyle === 'undefined') { TOKENS = FB; return TOKENS; }
   const s = getComputedStyle(document.documentElement);
   const get = (k, fb) => (s.getPropertyValue(k).trim() || fb);
-  TOKENS = {
-    mat:     get('--paper-2', '#E3DFD6'),   // the formwork field
-    inkSoft: get('--ink-soft', '#7C766B'),  // the quiet numeral + labels
-    line:    get('--line', 'rgba(26,26,24,0.12)'),
-  };
+  TOKENS = { mat: get('--paper-2', FB.mat), inkSoft: get('--ink-soft', FB.inkSoft), line: get('--line', FB.line) };
   return TOKENS;
 }
 

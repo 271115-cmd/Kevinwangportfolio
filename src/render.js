@@ -9,9 +9,10 @@
 
 import { PROJECTS, DISCIPLINES, byDiscipline, featured, labelFor, countFor } from './data/projects.js';
 import { coverFor } from './data/placeholder.js';
-import { POSTS, postBySlug } from './data/journal.js';
+import { postBySlug } from './data/journal.js';
 import { IMAGE_DIMS } from './data/imagedims.js';
 import { setMeta } from './chrome.js';
+import { listHTML, galleryHTML, journalHTML } from './render-html.js';
 
 // intrinsic width/height attrs so the browser reserves aspect-ratio space (no CLS)
 const dimAttr = (src) => { const d = IMAGE_DIMS[src]; return d ? ` width="${d[0]}" height="${d[1]}"` : ''; };
@@ -116,52 +117,11 @@ function renderFeatured(mount) {
   }).join('');
 }
 
-/* ---- DISCIPLINE: editorial index rows (links to detail) ---- */
-function renderList(mount, slug) {
-  const items = byDiscipline(slug);
-  const cat = labelFor(slug);
-  mount.classList.add('proj-list');
-  mount.innerHTML = items.map((p, i) => {
-    const cover = coverFor(p, pad2(i + 1), cat);
-    const ext = !!p.external;
-    const attrs = ext
-      ? `href="${esc(p.external)}" target="_blank" rel="noopener" data-no-transition`
-      : `href="${esc(p.app || detailHref(p))}" data-label="${esc(cat)}"`;
-    return (
-      `<a class="proj-row" data-cover="${esc(cover)}" ${attrs}>` +
-        `<span class="pr-index">${pad2(i + 1)}</span>` +
-        `<span class="pr-title">${esc(p.title)}</span>` +
-        `<span class="pr-summary">${esc(p.summary)}</span>` +
-        `<span class="pr-meta">${esc(p.role)} · ${esc(p.year)} ${badge(p)}</span>` +
-      `</a>`
-    );
-  }).join('');
-}
-
-/* ---- DISCIPLINE: image-forward gallery (links to detail) ---- */
-function renderGallery(mount, slug) {
-  const items = byDiscipline(slug);
-  const cat = labelFor(slug);
-  const spans = spanRhythm(items.length);
-  mount.classList.add('gallery');
-  mount.innerHTML = items.map((p, i) => {
-    const cover = coverFor(p, pad2(i + 1), cat);
-    const ext = !!p.external;
-    const attrs = ext
-      ? `href="${esc(p.external)}" target="_blank" rel="noopener" data-no-transition`
-      : `href="${esc(p.app || detailHref(p))}" data-label="${esc(cat)}"`;
-    return (
-      `<a class="gal-item reveal-plate" data-span="${spans[i]}" data-magnetic ${attrs}>` +
-        `<img src="${cover}" alt="${esc(p.title)} — ${esc(cat)}"${dimAttr(cover)} loading="lazy">` +
-        `<figcaption class="gi-cap">` +
-          `<span class="gi-id">${pad2(i + 1)}</span>` +
-          `<span class="gi-title">${esc(p.title)}</span>` +
-          `<span class="gi-meta">${ext ? '↗ External' : `${esc(p.role)} · ${esc(p.year)}`}</span>` +
-        `</figcaption>` +
-      `</a>`
-    );
-  }).join('');
-}
+/* ---- DISCIPLINE: editorial index rows / image gallery ----
+   The HTML is built by the shared (DOM-free) builders in render-html.js so
+   the build-time prerender can emit the same markup. ---- */
+function renderList(mount, slug) { mount.classList.add('proj-list'); mount.innerHTML = listHTML(slug); }
+function renderGallery(mount, slug) { mount.classList.add('gallery'); mount.innerHTML = galleryHTML(slug); }
 
 /* ---- PROJECT DETAIL (case study) ---- */
 function renderDetail(mount) {
@@ -240,16 +200,7 @@ function renderDetail(mount) {
 /* ---- JOURNAL: list of field notes ---- */
 const fmtDate = (d) => String(d).replace(/-/g, '.');
 
-function renderJournal(mount) {
-  mount.classList.add('jr-list');
-  mount.innerHTML = POSTS.map((p) =>
-    `<a class="jr-row reveal" href="post.html?slug=${esc(p.slug)}" data-label="Journal">` +
-      `<span class="jr-date">${esc(fmtDate(p.date))}</span>` +
-      `<span class="jr-mid"><span class="jr-title">${esc(p.title)}</span><span class="jr-excerpt">${esc(p.excerpt)}</span></span>` +
-      `<span class="jr-tags">${(p.tags || []).map(esc).join(' · ')}</span>` +
-    `</a>`
-  ).join('');
-}
+function renderJournal(mount) { mount.classList.add('jr-list'); mount.innerHTML = journalHTML(); }
 
 /* ---- JOURNAL: a single post (post.html?slug=) ---- */
 function renderPost(mount) {
