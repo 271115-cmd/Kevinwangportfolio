@@ -8,7 +8,7 @@
    ============================================================ */
 
 import { PROJECTS, DISCIPLINES, byDiscipline, featured, labelFor, countFor } from './data/projects.js';
-import { coverFor, placeholderCover } from './data/placeholder.js';
+import { coverFor } from './data/placeholder.js';
 import { POSTS, postBySlug } from './data/journal.js';
 import { IMAGE_DIMS } from './data/imagedims.js';
 import { setMeta } from './chrome.js';
@@ -19,12 +19,16 @@ const dimAttr = (src) => { const d = IMAGE_DIMS[src]; return d ? ` width="${d[0]
 /* Per-item share metadata — runs after the generic shell so a deep link to one
    project/post previews the actual item (title + summary) instead of "Project — Kevin Wang".
    og:image stays the brand PNG (reliable across scrapers); per-item images are a follow-up. */
-function applyShareMeta({ title, description }) {
+function applyShareMeta({ title, description, image }) {
   setMeta('meta[name="description"]', 'name', 'description', description);
   setMeta('meta[property="og:title"]', 'property', 'og:title', title);
   setMeta('meta[property="og:description"]', 'property', 'og:description', description);
   setMeta('meta[name="twitter:title"]', 'name', 'twitter:title', title);
   setMeta('meta[name="twitter:description"]', 'name', 'twitter:description', description);
+  if (image) {   // per-item 1200x630 JPG card (reliable across scrapers) — overrides the generic brand PNG
+    setMeta('meta[property="og:image"]', 'property', 'og:image', image);
+    setMeta('meta[name="twitter:image"]', 'name', 'twitter:image', image);
+  }
 }
 
 // CreativeWork structured data for a project (Google renders JS, so this is picked up)
@@ -168,7 +172,8 @@ function renderDetail(mount) {
   }
   document.title = `${p.title} — Kevin Wang`;
   const cat = labelFor(p.discipline);
-  applyShareMeta({ title: `${p.title} — Kevin Wang`, description: p.summary });
+  const ogCard = p.cover ? location.origin + p.cover.replace(/[^/]+$/, 'og.jpg') : null;
+  applyShareMeta({ title: `${p.title} — Kevin Wang`, description: p.summary, image: ogCard });
   injectProjectSchema(p, cat);
 
   // prev / next within the same discipline (wraps)
@@ -180,24 +185,26 @@ function renderDetail(mount) {
   // lead image — real cover or generated brutalist placeholder
   const hero = coverFor(p, '00', cat);
 
-  // plates: real gallery if present, else generated placeholders
-  const placeholderPlates = !(p.gallery && p.gallery.length);
-  const plates = placeholderPlates
-    ? [0, 1, 2].map((n) => ({ src: placeholderCover({ index: pad2(n + 1), label: cat, seed: `${p.id}-${n}` }), n }))
-    : p.gallery.map((src, n) => ({ src, n }));
+  // plates: ONLY real gallery images — never fake "placeholder" plates on a live site
+  const plates = (p.gallery || []).map((src, n) => ({ src, n }));
   const plateSpans = spanRhythm(plates.length);
 
   // spec sheet — one row per known fact; absent/em-dash fields silently drop
   const specRow = (k, v) => (v && v !== '—') ? `<li><span class="ds-k">${k}</span><span class="ds-v">${esc(v)}</span></li>` : '';
   const tagRow = p.tags?.length ? `<li><span class="ds-k">Tags</span><span class="ds-v">${p.tags.map(esc).join(', ')}</span></li>` : '';
-  const visit = p.external
-    ? `<a class="detail-visit" data-magnetic href="${esc(p.external)}" target="_blank" rel="noopener" data-no-transition>Visit live site ↗</a>`
+  // a live tool/site gets a real CTA instead of fabricated plates
+  const liveHref = p.external || p.app;
+  const visit = liveHref
+    ? `<a class="detail-visit" data-magnetic href="${esc(liveHref)}"${p.external ? ' target="_blank" rel="noopener"' : ''} data-no-transition>${p.external ? 'Visit live site ↗' : 'Open the live tool ↗'}</a>`
     : '';
+
+  // optional written case study (trusted HTML in projects.js, like journal posts) — renders only when present
+  const bodyHtml = p.body ? `<section class="detail-body">${p.body}</section>` : '';
 
   const platesHtml = plates.map((pl, idx) =>
     `<figure class="detail-plate reveal-plate" data-span="${plateSpans[idx]}">` +
       `<img src="${pl.src}" alt="${esc(p.title)} — plate ${pad2(pl.n + 1)}"${dimAttr(pl.src)} loading="lazy">` +
-      `<figcaption class="dp-cap">Plate ${pad2(pl.n + 1)}${placeholderPlates ? ' · placeholder' : ''}</figcaption>` +
+      `<figcaption class="dp-cap">Plate ${pad2(pl.n + 1)}</figcaption>` +
     `</figure>`
   ).join('');
 
@@ -221,7 +228,8 @@ function renderDetail(mount) {
       `</div>` +
     `</header>` +
     `<figure class="detail-hero reveal-plate"><img src="${hero}" alt="${esc(p.title)} — ${esc(cat)}"${dimAttr(hero)} loading="lazy"></figure>` +
-    `<div class="detail-gallery">${platesHtml}</div>` +
+    bodyHtml +
+    (plates.length ? `<div class="detail-gallery">${platesHtml}</div>` : '') +
     (sibs.length > 1
       ? `<nav class="detail-nav" aria-label="More ${esc(cat)}">${navLink(prev, '← Prev')}${navLink(next, 'Next →')}</nav>`
       : '');

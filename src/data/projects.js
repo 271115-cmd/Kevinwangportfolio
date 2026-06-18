@@ -1,9 +1,17 @@
 /* ============================================================
    PROJECTS — single source of truth for the whole site.
    Edit this file to add/replace work. Drop real images in
-   public/work/<id>/ and point `cover` (and `gallery`) at them.
+   public/work/<id>/ and point `cover` (and `gallery`) at them,
+   then run `npm run images` to optimize + index them.
    Dropdown counts, listings, and the home "featured" grid are
    all DERIVED from this data — never hand-maintained.
+
+   Optional per-project fields a detail page understands:
+     gallery: ['/work/<id>/01.webp', ...]   real plates (no fakes are shown)
+     body:    '<p>…</p><h2>…</h2><p>…</p>'   a written case study (concept /
+              process / outcome), trusted HTML — renders between hero + plates.
+              The strongest lever for architecture admissions; add it to the
+              studio pieces first.
    ============================================================ */
 
 export const DISCIPLINES = [

@@ -47,8 +47,6 @@ export function placeholderCover({ index = '00', label = '', seed = '' } = {}) {
         `font-weight="340" font-size="560" letter-spacing="-8" fill="${inkSoft}" opacity="0.42">${index}</text>` +
       `<text x="64" y="116" font-family="'Geist Mono', ui-monospace, monospace" font-weight="500" ` +
         `font-size="38" letter-spacing="5" fill="${inkSoft}" opacity="0.75">${String(label).toUpperCase()}</text>` +
-      `<text x="${W - 64}" y="116" text-anchor="end" font-family="'Geist Mono', ui-monospace, monospace" ` +
-        `font-weight="400" font-size="38" letter-spacing="5" fill="${inkSoft}" opacity="0.55">PLACEHOLDER</text>` +
     `</svg>`;
 
   return 'data:image/svg+xml,' + encodeURIComponent(svg);

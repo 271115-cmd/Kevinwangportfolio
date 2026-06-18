@@ -202,6 +202,12 @@ body.dd-open #dd-scrim { pointer-events: auto; }
 .detail-hero { margin-top: clamp(1.5rem,4vw,2.5rem); }
 .detail-hero img { width: 100%; height: auto; background: var(--paper-2); }
 .detail-gallery { display: grid; grid-template-columns: repeat(12,1fr); column-gap: var(--pad); row-gap: clamp(1.5rem,4vw,3rem); padding: clamp(1.5rem,4vw,3rem) 0; max-width: 70rem; }
+/* optional written case study (concept / process), authored per project in projects.js */
+.detail-body { max-width: 60ch; margin: clamp(1.5rem,4vw,2.5rem) 0; line-height: 1.5; }
+.detail-body > * + * { margin-top: 1rem; }
+.detail-body h2, .detail-body h3 { margin-top: 1.6rem; font-style: italic; }
+.detail-body em { font-style: italic; }
+.detail-body a { text-decoration: underline; text-underline-offset: 0.18em; }
 .detail-plate { grid-column: span 6; }
 .detail-plate[data-span="8"] { grid-column: span 8; }
 .detail-plate[data-span="12"] { grid-column: span 12; }
