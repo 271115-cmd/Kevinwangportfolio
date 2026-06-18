@@ -138,6 +138,8 @@ body.dd-open #dd-scrim { pointer-events: auto; }
 .field-bc { bottom: var(--pad); left: 50%; transform: translateX(-50%); }
 .field-br { bottom: var(--pad); right: var(--pad); }
 .field-hint .fh-dot { color: var(--ink); margin-right: .35rem; }
+.field-walk[aria-pressed="true"] .fh-dot { animation: field-walk-pulse 1.4s ease-in-out infinite; }
+@keyframes field-walk-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .2; } }
 .field-statement { flex-direction: column; align-items: flex-start; gap: .15rem; line-height: 1.25; max-width: 24rem; }
 .field-cursor { position: fixed; top: 0; left: 0; z-index: 6; pointer-events: none; color: var(--ink); white-space: nowrap; transform: translate(-200px, -200px); }
 @media (hover: none), (pointer: coarse) {

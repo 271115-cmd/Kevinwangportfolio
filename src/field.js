@@ -68,6 +68,7 @@ export function initField() {
   /* view: current eased toward a target; drag adds momentum */
   let tx = 0, ty = 0, sc = 1, txT = 0, tyT = 0, scT = 1, vx = 0, vy = 0;
   let down = false, lastX = 0, lastY = 0, moved = 0;
+  let walk = false, wvx = 0.62, wvy = 0.41;   // "Walk around" auto-pan velocity (px/frame)
 
   function homeView() {
     const fit = Math.min(wrap.clientWidth / WORLD.w, wrap.clientHeight / WORLD.h) * 2.1;
@@ -81,16 +82,22 @@ export function initField() {
     const r = ns / scT;
     txT = cx - (cx - txT) * r; tyT = cy - (cy - tyT) * r; scT = ns;
   }
-  // soft bounds — the work can never be flung entirely off-screen
+  // soft bounds — the work can never be flung entirely off-screen.
+  // While walking, reflect the heading off whichever edge it reaches.
   function clampTarget() {
     const W = WORLD.w * scT, H = WORLD.h * scT;
     const vw = wrap.clientWidth, vh = wrap.clientHeight;
-    txT = Math.max(vw * 0.3 - W, Math.min(vw * 0.7, txT));
-    tyT = Math.max(vh * 0.3 - H, Math.min(vh * 0.7, tyT));
+    const minX = vw * 0.3 - W, maxX = vw * 0.7;
+    const minY = vh * 0.3 - H, maxY = vh * 0.7;
+    if (txT < minX) { txT = minX; if (walk && wvx < 0) wvx = -wvx; }
+    else if (txT > maxX) { txT = maxX; if (walk && wvx > 0) wvx = -wvx; }
+    if (tyT < minY) { tyT = minY; if (walk && wvy < 0) wvy = -wvy; }
+    else if (tyT > maxY) { tyT = maxY; if (walk && wvy > 0) wvy = -wvy; }
   }
 
   function tick() {
-    if (!down && (Math.abs(vx) > 0.04 || Math.abs(vy) > 0.04)) { txT += vx; tyT += vy; vx *= 0.93; vy *= 0.93; }
+    if (walk && !down) { txT += wvx; tyT += wvy; }
+    else if (!down && (Math.abs(vx) > 0.04 || Math.abs(vy) > 0.04)) { txT += vx; tyT += vy; vx *= 0.93; vy *= 0.93; }
     clampTarget();
     const e = 0.16;
     tx += (txT - tx) * e; ty += (tyT - ty) * e; sc += (scT - sc) * e;
@@ -102,9 +109,21 @@ export function initField() {
   tx = txT; ty = tyT; sc = scT;           // first frame lands settled, then eases live
   requestAnimationFrame(tick);
 
+  /* "Walk around" — auto-pan a slow tour across the field */
+  const walkBtn = wrap.querySelector('.field-walk');
+  const walkLabel = walkBtn?.querySelector('.fw-label');
+  function setWalk(on) {
+    walk = on; vx = vy = 0;
+    if (walkBtn) walkBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    if (walkLabel) walkLabel.textContent = on ? 'Stop walking' : 'Walk around';
+  }
+  const stopWalk = () => { if (walk) setWalk(false); };
+  if (walkBtn) walkBtn.addEventListener('click', () => setWalk(!walk));
+
   /* drag to pan (with velocity for momentum) */
   wrap.addEventListener('pointerdown', (e) => {
     if (e.target.closest('.field-corner')) return;
+    stopWalk();
     down = true; moved = 0; lastX = e.clientX; lastY = e.clientY; vx = vy = 0;
     wrap.classList.add('grabbing');
   });
@@ -123,12 +142,14 @@ export function initField() {
   /* trackpad / wheel: scroll = walk around (pan); pinch or ctrl+wheel = zoom */
   wrap.addEventListener('wheel', (e) => {
     e.preventDefault();
+    stopWalk();
     if (e.ctrlKey) zoomAt(e.clientX, e.clientY, e.deltaY < 0 ? 1.08 : 1 / 1.08);
     else { txT -= e.deltaX; tyT -= e.deltaY; vx = vy = 0; }
   }, { passive: false });
 
   /* controls */
   wrap.querySelectorAll('[data-z]').forEach((b) => b.addEventListener('click', () => {
+    stopWalk();
     const cx = wrap.clientWidth / 2, cy = wrap.clientHeight / 2, k = b.dataset.z;
     if (k === 'in') zoomAt(cx, cy, 1.3);
     else if (k === 'out') zoomAt(cx, cy, 1 / 1.3);
@@ -141,6 +162,7 @@ export function initField() {
   wrap.tabIndex = 0;
   wrap.addEventListener('keydown', (e) => {
     const cx = wrap.clientWidth / 2, cy = wrap.clientHeight / 2, STEP = 120;
+    if (['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','+','=','-'].includes(e.key)) stopWalk();
     if (e.key === 'ArrowLeft') { txT += STEP; vx = 0; }
     else if (e.key === 'ArrowRight') { txT -= STEP; vx = 0; }
     else if (e.key === 'ArrowUp') { tyT += STEP; vy = 0; }
