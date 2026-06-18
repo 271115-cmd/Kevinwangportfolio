@@ -11,9 +11,38 @@ import { PROJECTS, DISCIPLINES, byDiscipline, featured, labelFor, countFor } fro
 import { coverFor, placeholderCover } from './data/placeholder.js';
 import { POSTS, postBySlug } from './data/journal.js';
 import { IMAGE_DIMS } from './data/imagedims.js';
+import { setMeta } from './chrome.js';
 
 // intrinsic width/height attrs so the browser reserves aspect-ratio space (no CLS)
 const dimAttr = (src) => { const d = IMAGE_DIMS[src]; return d ? ` width="${d[0]}" height="${d[1]}"` : ''; };
+
+/* Per-item share metadata — runs after the generic shell so a deep link to one
+   project/post previews the actual item (title + summary) instead of "Project — Kevin Wang".
+   og:image stays the brand PNG (reliable across scrapers); per-item images are a follow-up. */
+function applyShareMeta({ title, description }) {
+  setMeta('meta[name="description"]', 'name', 'description', description);
+  setMeta('meta[property="og:title"]', 'property', 'og:title', title);
+  setMeta('meta[property="og:description"]', 'property', 'og:description', description);
+  setMeta('meta[name="twitter:title"]', 'name', 'twitter:title', title);
+  setMeta('meta[name="twitter:description"]', 'name', 'twitter:description', description);
+}
+
+// CreativeWork structured data for a project (Google renders JS, so this is picked up)
+function injectProjectSchema(p, cat) {
+  if (document.getElementById('ld-work')) return;
+  const origin = location.origin;
+  const graph = {
+    '@context': 'https://schema.org', '@type': 'CreativeWork',
+    name: p.title, creator: { '@type': 'Person', '@id': origin + '/#person', name: 'Kevin Wang' },
+    genre: cat, dateCreated: String(p.year || ''), abstract: p.summary,
+    ...(p.cover ? { image: origin + p.cover } : {}),
+    ...(p.tags?.length ? { keywords: p.tags.join(', ') } : {}),
+    url: origin + location.pathname + location.search,
+  };
+  const s = document.createElement('script');
+  s.type = 'application/ld+json'; s.id = 'ld-work'; s.textContent = JSON.stringify(graph);
+  document.head.appendChild(s);
+}
 
 const pad2 = (n) => String(n).padStart(2, '0');
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) =>
@@ -139,6 +168,8 @@ function renderDetail(mount) {
   }
   document.title = `${p.title} — Kevin Wang`;
   const cat = labelFor(p.discipline);
+  applyShareMeta({ title: `${p.title} — Kevin Wang`, description: p.summary });
+  injectProjectSchema(p, cat);
 
   // prev / next within the same discipline (wraps)
   const sibs = byDiscipline(p.discipline);
@@ -218,6 +249,7 @@ function renderPost(mount) {
     return;
   }
   document.title = `${p.title} — Kevin Wang`;
+  applyShareMeta({ title: `${p.title} — Kevin Wang`, description: p.excerpt });
   mount.innerHTML =
     `<a class="post-back" href="/journal.html" data-label="Journal">← Field notes</a>` +
     `<header class="post-head">` +

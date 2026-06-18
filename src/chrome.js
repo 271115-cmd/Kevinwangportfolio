@@ -110,7 +110,7 @@ export function mountChrome() {
    Built from `location` so it auto-adapts to whatever domain the site
    is served from (no hardcoded URL to update when you add a domain).
    ------------------------------------------------------------------ */
-function setMeta(selector, attr, key, val) {
+export function setMeta(selector, attr, key, val) {
   let el = document.head.querySelector(selector);
   if (!el) { el = document.createElement('meta'); el.setAttribute(attr, key); document.head.appendChild(el); }
   el.setAttribute('content', val);
