@@ -8,6 +8,7 @@
    ============================================================ */
 
 import { PROJECTS } from './data/projects.js';
+import { IMAGE_DIMS } from './data/imagedims.js';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) =>
   ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -65,8 +66,10 @@ export function initField() {
       const w = Math.round(maxW * (0.76 + rnd() * 0.22));
       const x = Math.round(col * cellW + GAP / 2 + rnd() * Math.max(0, cellW - w - GAP));
       const y = Math.round(row * cellH + GAP / 2 + rnd() * Math.max(0, cellH - w * RES - GAP));
+      const d = IMAGE_DIMS[it.src];
+      const dim = d ? ` width="${d[0]}" height="${d[1]}"` : '';   // reserve aspect so layout (and the tour) is correct before load
       return `<a class="field-img" href="${esc(it.href)}" data-label="" style="left:${x}px;top:${y}px;width:${w}px">` +
-        `<img src="${esc(it.src)}" alt="${esc(it.title)}" loading="eager" decoding="async" draggable="false">` +
+        `<img src="${esc(it.src)}" alt="${esc(it.title)}"${dim} loading="lazy" decoding="async" draggable="false">` +
         `<span class="fi-cap">${esc(it.title)}</span></a>`;
     }).join('');
   }

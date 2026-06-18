@@ -10,6 +10,10 @@
 import { PROJECTS, DISCIPLINES, byDiscipline, featured, labelFor, countFor } from './data/projects.js';
 import { coverFor, placeholderCover } from './data/placeholder.js';
 import { POSTS, postBySlug } from './data/journal.js';
+import { IMAGE_DIMS } from './data/imagedims.js';
+
+// intrinsic width/height attrs so the browser reserves aspect-ratio space (no CLS)
+const dimAttr = (src) => { const d = IMAGE_DIMS[src]; return d ? ` width="${d[0]}" height="${d[1]}"` : ''; };
 
 const pad2 = (n) => String(n).padStart(2, '0');
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) =>
@@ -70,7 +74,7 @@ function renderFeatured(mount) {
     return (
       `<a class="feat-card${wide} reveal" data-magnetic href="${esc(href)}"${tgt}>` +
         `<div class="fc-top"><span class="fc-cat">${esc(cat)}</span><span class="fc-num">F/${pad2(i + 1)}</span></div>` +
-        `<img class="fc-cover" src="${cover}" alt="${esc(p.title)} — ${esc(cat)}" loading="lazy">` +
+        `<img class="fc-cover" src="${cover}" alt="${esc(p.title)} — ${esc(cat)}"${dimAttr(cover)} loading="lazy">` +
         `<h3 class="fc-title">${esc(p.title)}</h3>` +
         `<p class="fc-summary">${esc(p.summary)}</p>` +
         `<div class="fc-foot"><span>${esc(p.role)}</span><span>${ext ? '↗ External' : esc(p.year)}</span></div>` +
@@ -115,7 +119,7 @@ function renderGallery(mount, slug) {
       : `href="${esc(p.app || detailHref(p))}" data-label="${esc(cat)}"`;
     return (
       `<a class="gal-item reveal-plate" data-span="${spans[i]}" data-magnetic ${attrs}>` +
-        `<img src="${cover}" alt="${esc(p.title)} — ${esc(cat)}" loading="lazy">` +
+        `<img src="${cover}" alt="${esc(p.title)} — ${esc(cat)}"${dimAttr(cover)} loading="lazy">` +
         `<figcaption class="gi-cap">` +
           `<span class="gi-id">${pad2(i + 1)}</span>` +
           `<span class="gi-title">${esc(p.title)}</span>` +
@@ -161,7 +165,7 @@ function renderDetail(mount) {
 
   const platesHtml = plates.map((pl, idx) =>
     `<figure class="detail-plate reveal-plate" data-span="${plateSpans[idx]}">` +
-      `<img src="${pl.src}" alt="${esc(p.title)} — plate ${pad2(pl.n + 1)}" loading="lazy">` +
+      `<img src="${pl.src}" alt="${esc(p.title)} — plate ${pad2(pl.n + 1)}"${dimAttr(pl.src)} loading="lazy">` +
       `<figcaption class="dp-cap">Plate ${pad2(pl.n + 1)}${placeholderPlates ? ' · placeholder' : ''}</figcaption>` +
     `</figure>`
   ).join('');
@@ -185,7 +189,7 @@ function renderDetail(mount) {
         `</aside>` +
       `</div>` +
     `</header>` +
-    `<figure class="detail-hero reveal-plate"><img src="${hero}" alt="${esc(p.title)} — ${esc(cat)}" loading="lazy"></figure>` +
+    `<figure class="detail-hero reveal-plate"><img src="${hero}" alt="${esc(p.title)} — ${esc(cat)}"${dimAttr(hero)} loading="lazy"></figure>` +
     `<div class="detail-gallery">${platesHtml}</div>` +
     (sibs.length > 1
       ? `<nav class="detail-nav" aria-label="More ${esc(cat)}">${navLink(prev, '← Prev')}${navLink(next, 'Next →')}</nav>`
