@@ -45,8 +45,8 @@ function prerenderContent() {
           (_m, open, slug, close) => open + String(countFor(slug)).padStart(2, '0') + close);
         out = out.replace(/(<span[^>]*\bdata-count-total[^>]*>)[^<]*(<\/span>)/g,
           (_m, open, close) => open + PROJECTS.length + close);
-        // 3. bake a static canonical + og:url (skip the ?slug-routed pages — JS sets those)
-        if (!/\/(project|post)\.html$/.test(path) && !/rel="canonical"/.test(out)) {
+        // 3. bake a static canonical + og:url (skip ?slug-routed pages — JS sets those — and noindex pages like 404)
+        if (!/\/(project|post)\.html$/.test(path) && !/rel="canonical"/.test(out) && !/name="robots"[^>]*content="[^"]*noindex/.test(out)) {
           const url = HOST + (path === '/' || path === '/index.html' ? '/' : path);
           out = out.replace(/<\/head>/,
             `  <link rel="canonical" href="${url}" />\n  <meta property="og:url" content="${url}" />\n</head>`);

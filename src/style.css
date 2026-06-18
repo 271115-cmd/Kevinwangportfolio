@@ -153,6 +153,8 @@ body.dd-open #dd-scrim { pointer-events: auto; }
   /* bottom chrome: keep the statement to the left half; stack Index above About on the right so they never collide */
   .field-statement { max-width: 50vw; }
   .field-bc { left: auto; right: var(--pad); transform: none; bottom: calc(var(--pad) + 3rem); }
+  /* touch has pinch-zoom — drop the redundant Zoom buttons so the top row can't collide with Walk */
+  .field-tl [data-z="in"], .field-tl [data-z="out"] { display: none; }
 }
 
 /* ============================================================

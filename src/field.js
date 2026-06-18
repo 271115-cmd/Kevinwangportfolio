@@ -189,7 +189,8 @@ export function initField() {
     if (walkBtn) walkBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
     if (walkLabel) walkLabel.textContent = on ? 'Stop walking' : 'Walk around';
   }
-  const stopWalk = () => { if (walk) setWalk(false); };
+  let userActed = false;   // set on first real input — cancels the pending auto-walk
+  const stopWalk = () => { userActed = true; if (walk) setWalk(false); };
   if (walkBtn) walkBtn.addEventListener('click', () => setWalk(!walk));
 
   /* drag to pan (momentum); two-finger pinch to zoom on touch */
@@ -230,9 +231,10 @@ export function initField() {
   wrap.addEventListener('pointercancel', liftPointer);
   field.addEventListener('click', (e) => { if (moved > 6) { e.preventDefault(); e.stopPropagation(); } }, true);
 
-  /* touch devices: auto-start the guided tour so the work reveals itself (any input stops it) */
+  /* touch devices: auto-start the guided tour so the work reveals itself —
+     unless the user has already grabbed/zoomed first (stopWalk sets userActed) */
   if (matchMedia('(pointer: coarse)').matches && !reduced.matches) {
-    setTimeout(() => { if (!walk && !down && pointers.size === 0) setWalk(true); }, 1200);
+    setTimeout(() => { if (!userActed && !walk && !down && pointers.size === 0) setWalk(true); }, 1200);
   }
 
   /* trackpad / wheel: scroll = walk around (pan); pinch or ctrl+wheel = zoom */
