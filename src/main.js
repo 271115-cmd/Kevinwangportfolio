@@ -1,7 +1,7 @@
 /* ============================================================
    main.js — entry point. Orchestrates init order so the chrome
-   is injected, the page is hydrated from data, then motion +
-   cursor bind to the final DOM.
+   is injected, the page is hydrated from data, then motion binds
+   to the final DOM.
    ============================================================ */
 
 import './style.css';

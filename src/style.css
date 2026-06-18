@@ -48,6 +48,9 @@ a:hover { text-decoration: underline; text-underline-offset: 0.18em; text-decora
 button { font: inherit; color: inherit; background: none; border: none; cursor: pointer; }
 button:hover { text-decoration: underline; text-underline-offset: 0.18em; }
 h1, h2, h3, h4 { font-weight: normal; font-size: inherit; line-height: 1.2; }
+/* visible keyboard focus (WCAG 2.4.7) — :focus-visible leaves mouse/touch untouched */
+:where(a, button, input, textarea, select, [tabindex]):focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+.field-img:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
 
 /* one size everywhere — these helpers just normalise */
 .display { font-family: var(--font); font-size: var(--fs); font-weight: normal; line-height: 1.2; }
@@ -65,8 +68,6 @@ h1, h2, h3, h4 { font-weight: normal; font-size: inherit; line-height: 1.2; }
 .bleed { width: 100%; padding-inline: var(--pad); }
 .rule-top { border-top: 1px solid var(--line); }
 
-/* no custom cursor — the system cursor (and grab on the field) is enough */
-#cursor, #cursor-text { display: none !important; }
 
 /* ============================================================
    PAGE TRANSITION — a plain wipe, no label drama
@@ -144,9 +145,10 @@ body.dd-open #dd-scrim { pointer-events: auto; }
 .field-statement { flex-direction: column; align-items: flex-start; gap: .15rem; line-height: 1.25; max-width: 24rem; }
 .field-cursor { position: fixed; top: 0; left: 0; z-index: 6; pointer-events: none; color: var(--ink); white-space: nowrap; transform: translate(-200px, -200px); }
 @media (hover: none), (pointer: coarse) {
-  .field-tr { display: none; }
   .field-tl { gap: .8rem; }
   .field-cursor { display: none; }
+  /* touch: give the corner controls a >=44px hit area (WCAG 2.5.5) without bloating the glyph */
+  .field-corner a, .field-corner button { min-height: 44px; display: inline-flex; align-items: center; padding-block: .35rem; }
 }
 
 /* ============================================================
@@ -267,7 +269,7 @@ body.dd-open #dd-scrim { pointer-events: auto; }
 .read-stage { display: grid; grid-template-columns: 1.2fr 1fr; gap: clamp(1.2rem,3vw,2rem); align-items: stretch; }
 @media (max-width: 760px) { .read-stage { grid-template-columns: 1fr; } }
 .read-drop { position: relative; min-height: 320px; border: 1px solid var(--line); display: grid; place-items: center; overflow: hidden; background: var(--paper); }
-.read-drop:hover, .read-drop:focus-visible, .read-drop.is-drag { border-color: var(--ink); outline: none; }
+.read-drop:hover, .read-drop:focus-visible, .read-drop.is-drag { border-color: var(--ink); }
 .read-drop.has-image .read-drop-inner { display: none; }
 .read-drop-inner { display: flex; flex-direction: column; align-items: center; gap: .8rem; text-align: center; padding: 2rem; pointer-events: none; }
 .read-drop-glyph { font-size: 2rem; line-height: 1; }
@@ -280,7 +282,7 @@ body.dd-open #dd-scrim { pointer-events: auto; }
 .read-sample { text-decoration: underline; text-underline-offset: 0.18em; }
 .read-note { width: 100%; font: inherit; padding: .5rem 0; background: transparent; border: none; border-bottom: 1px solid var(--line); color: var(--ink); }
 .read-note::placeholder { color: var(--ink); opacity: .5; }
-.read-note:focus { outline: none; border-bottom-color: var(--ink); }
+.read-note:focus { border-bottom-color: var(--ink); }
 .read-go { align-self: flex-start; border-bottom: 1px solid var(--ink); }
 .read-go:hover:not(:disabled) { text-decoration: none; }
 .read-go:disabled { opacity: .4; }

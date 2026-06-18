@@ -77,7 +77,7 @@ export function initField() {
   // "Walk around" — a guided tour that steps between the works, one at a time.
   // Each leg is a time-based tween: ease-in-out (no lurch) with duration set by
   // the distance travelled, so every leg pans at the same steady speed.
-  let walk = false, stopsEls = [], tourIdx = 0;
+  let walk = false, stopsEls = [], tourIdx = 0, toured = 0;
   let phase = 'travel', tweenFrom = null, tweenTo = null, tweenStart = 0, tweenDur = 0, dwellUntil = 0;
   const FRAME_W = 0.6, FRAME_H = 0.72;  // fraction of the viewport a framed work fills
   const DWELL_MS = 1500;                // pause on each work
@@ -141,7 +141,12 @@ export function initField() {
         if (p >= 1) { phase = 'dwell'; dwellUntil = now + DWELL_MS; markCurrent(); }   // arrived — show this work's name
       } else {                                         // dwell — hold on the work, then move to the next
         tx = tweenTo.x; ty = tweenTo.y; sc = tweenTo.s;
-        if (now >= dwellUntil) { tourIdx = (tourIdx + 1) % stopsEls.length; startLeg(); }
+        if (now >= dwellUntil) {
+          toured += 1;
+          // reduced motion: no perpetual loop — show each work once, then stop (WCAG 2.3.3 / 2.2.2)
+          if (reduced.matches && toured >= stopsEls.length) setWalk(false);
+          else { tourIdx = (tourIdx + 1) % stopsEls.length; startLeg(); }
+        }
       }
       txT = tx; tyT = ty; scT = sc;                    // keep targets synced for a seamless handoff to manual control
     } else {
@@ -160,7 +165,7 @@ export function initField() {
   const walkBtn = wrap.querySelector('.field-walk');
   const walkLabel = walkBtn?.querySelector('.fw-label');
   function setWalk(on) {
-    walk = on; vx = vy = 0;
+    walk = on; vx = vy = 0; toured = 0;
     if (on) {
       stopsEls = Array.from(field.querySelectorAll('.field-img'));   // tour in reading order
       // begin at the work nearest what you're already looking at, then sweep through the rest
