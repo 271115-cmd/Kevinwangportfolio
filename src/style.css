@@ -129,7 +129,9 @@ body.dd-open #dd-scrim { pointer-events: auto; }
 .field-img { position: absolute; display: block; }
 .field-img img { display: block; width: 100%; height: auto; background: var(--paper-2); }
 .field-img .fi-cap { position: absolute; left: 0; top: 100%; margin-top: 3px; white-space: nowrap; opacity: 0; transition: opacity .15s; pointer-events: none; }
-.field-img:hover .fi-cap { opacity: 1; }
+.field-img:hover .fi-cap,
+.field-img.is-current .fi-cap { opacity: 1; }
+.field-img.is-current .fi-cap { transform-origin: top left; }   /* tour: JS counter-scales it to stay legible at zoom */
 
 .field-corner { position: fixed; z-index: 5; display: flex; gap: 1.1rem; align-items: baseline; }
 .field-tl { top: var(--pad); left: var(--pad); }

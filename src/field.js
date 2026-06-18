@@ -77,7 +77,7 @@ export function initField() {
   // "Walk around" — a guided tour that steps between the works, one at a time.
   // Each leg is a time-based tween: ease-in-out (no lurch) with duration set by
   // the distance travelled, so every leg pans at the same steady speed.
-  let walk = false, stopsEls = [], tourIdx = 0;
+  let walk = false, stopsEls = [], tourIdx = 0, currentCap = null;
   let phase = 'travel', tweenFrom = null, tweenTo = null, tweenStart = 0, tweenDur = 0, dwellUntil = 0;
   const FRAME_W = 0.6, FRAME_H = 0.72;  // fraction of the viewport a framed work fills
   const DWELL_MS = 1500;                // pause on each work
@@ -121,6 +121,18 @@ export function initField() {
     tweenDur = reduced.matches ? 0 : Math.max(MIN_DUR, Math.min(MAX_DUR, d / PAN_SPEED));
     tweenStart = performance.now();
     phase = 'travel';
+    markCurrent();
+  }
+  // show the current work's name automatically (no hover needed); tick() counter-scales it for legibility
+  function markCurrent() {
+    if (currentCap) currentCap.style.transform = '';
+    stopsEls.forEach((el, i) => el.classList.toggle('is-current', i === tourIdx));
+    currentCap = stopsEls[tourIdx]?.querySelector('.fi-cap') || null;
+  }
+  function clearCurrent() {
+    if (currentCap) currentCap.style.transform = '';
+    stopsEls.forEach((el) => el.classList.remove('is-current'));
+    currentCap = null;
   }
 
   function tick(now) {
@@ -136,6 +148,7 @@ export function initField() {
         tx = tweenTo.x; ty = tweenTo.y; sc = tweenTo.s;
         if (now >= dwellUntil) { tourIdx = (tourIdx + 1) % stopsEls.length; startLeg(); }
       }
+      if (currentCap) currentCap.style.transform = `scale(${(1 / sc).toFixed(3)})`;   // keep the name legible at any zoom
       txT = tx; tyT = ty; scT = sc;                    // keep targets synced for a seamless handoff to manual control
     } else {
       if (!down && (Math.abs(vx) > 0.04 || Math.abs(vy) > 0.04)) { txT += vx; tyT += vy; vx *= 0.93; vy *= 0.93; }
@@ -167,7 +180,7 @@ export function initField() {
       });
       tourIdx = best;
       startLeg();
-    } else { tweenTo = null; }
+    } else { tweenTo = null; clearCurrent(); }
     if (walkBtn) walkBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
     if (walkLabel) walkLabel.textContent = on ? 'Stop walking' : 'Walk around';
   }
