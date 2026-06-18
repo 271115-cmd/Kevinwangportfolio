@@ -396,8 +396,8 @@ body.axis-active .axis-controls { opacity: 1; visibility: visible; }
 /* ============================================================
    REVEAL — barely anything (restraint)
    ============================================================ */
-.reveal { opacity: 0; }
-.reveal.is-in { opacity: 1; transition: opacity .5s; }
+.reveal { opacity: 0; transition: opacity .6s ease; }
+.reveal.is-in { opacity: 1; }
 .reveal-plate.is-in, .reveal-plate { opacity: 1; }
 
 @media (prefers-reduced-motion: reduce) {

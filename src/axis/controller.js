@@ -19,6 +19,10 @@ export function initAxis() {
   const canvas = document.getElementById('axis-canvas');
   if (!canvas) return;
 
+  // ScrollTrigger now lives only on this (lazy) page, so sync it to Lenis here
+  // rather than globally in motion.js — keeps ScrollTrigger out of the main bundle.
+  getLenis()?.on('scroll', ScrollTrigger.update);
+
   const state = createAxisState();
   // WebGL can be unavailable (old device, disabled, GPU blocklist). If the
   // renderer throws, fall back gracefully: hide the decorative canvas and let

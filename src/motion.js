@@ -1,13 +1,13 @@
 /* ============================================================
-   motion.js — Lenis smooth scroll + GSAP ScrollTrigger reveals
-   + the char-mask hero intro. Mirrors the proven Duyichu wiring.
+   motion.js — Lenis smooth scroll + the char-mask hero intro.
+   Reveals use IntersectionObserver + CSS (no ScrollTrigger), so the
+   heavy ScrollTrigger plugin stays OUT of the universal bundle — only
+   the axis page lazy-loads it. GSAP core (hero intro, page transitions,
+   dropdown) + Lenis (smooth scroll) remain.
    ============================================================ */
 
 import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from 'lenis';
-
-gsap.registerPlugin(ScrollTrigger);
 
 const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -18,8 +18,7 @@ export function initLenis() {
   if (reduced) return;            // honour reduced-motion: native scroll
   // longer cubic glide — the tactile signature of the promenade
   lenis = new Lenis({ duration: 1.35, smoothWheel: true, easing: (t) => 1 - Math.pow(1 - t, 3) });
-  lenis.on('scroll', ScrollTrigger.update);
-  gsap.ticker.add((t) => lenis.raf(t * 1000));
+  gsap.ticker.add((t) => lenis.raf(t * 1000));   // drive Lenis off gsap core's ticker
   gsap.ticker.lagSmoothing(0);
 }
 
@@ -74,27 +73,18 @@ export function playHeroIntro() {
 }
 
 export function initReveals() {
-  const plates = gsap.utils.toArray('.reveal-plate');
-  const els = gsap.utils.toArray('.reveal');
-  if (reduced) {
+  const els = [...document.querySelectorAll('.reveal, .reveal-plate')];
+  if (reduced || !('IntersectionObserver' in window)) {
     els.forEach((e) => e.classList.add('is-in'));
-    plates.forEach((e) => e.classList.add('is-in'));
     return;
   }
-  // text/blocks settle from shadow into light
-  if (els.length) ScrollTrigger.batch('.reveal', {
-    start: 'top 88%', once: true,
-    onEnter: (batch) => gsap.to(batch, { opacity: 1, y: 0, duration: 1.0, ease: 'power2.out', stagger: 0.12, overwrite: true }),
-  });
-  // images: light fills the wall (clip-path wipe, driven by CSS .is-in)
-  if (plates.length) ScrollTrigger.batch('.reveal-plate', {
-    start: 'top 90%', once: true,
-    onEnter: (batch) => batch.forEach((el, i) => setTimeout(() => el.classList.add('is-in'), i * 110)),
-  });
-}
-
-export function refreshSoon() {
-  document.fonts?.ready.then(() => ScrollTrigger.refresh());
-  setTimeout(() => ScrollTrigger.refresh(), 1600);
-  window.addEventListener('load', () => ScrollTrigger.refresh(), { once: true });
+  // settle each element into light as it scrolls in — CSS handles the transition
+  const io = new IntersectionObserver((entries) => {
+    entries.filter((en) => en.isIntersecting).forEach((en, i) => {
+      io.unobserve(en.target);
+      en.target.style.transitionDelay = (i * 70) + 'ms';   // gentle per-batch stagger
+      en.target.classList.add('is-in');
+    });
+  }, { rootMargin: '0px 0px -8% 0px' });
+  els.forEach((e) => io.observe(e));
 }

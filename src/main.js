@@ -8,7 +8,7 @@ import './style.css';
 import { initTransition } from './transition.js';
 import { mountChrome } from './chrome.js';
 import { hydratePage, resolveActivePage } from './render.js';
-import { initLenis, initReveals, playHeroIntro, refreshSoon } from './motion.js';
+import { initLenis, initReveals, playHeroIntro } from './motion.js';
 
 resolveActivePage();  // detail route: derive active discipline from ?slug= first
 initTransition();     // reveal cover already up — wire reveal + click-intercept
@@ -16,8 +16,7 @@ mountChrome();        // inject header + dropdown + footer; init dropdown
 hydratePage();        // render featured/list/gallery from projects.js
 initLenis();          // smooth scroll
 playHeroIntro();      // char-mask hero (home only)
-initReveals();        // scroll reveals
-refreshSoon();        // ScrollTrigger refresh after fonts/layout settle
+initReveals();        // scroll reveals (IntersectionObserver + CSS)
 
 // "Read This Building" tool — only loaded on read.html (keeps it off every other page)
 if (document.getElementById('read-app')) {
