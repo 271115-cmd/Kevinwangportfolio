@@ -167,6 +167,8 @@ function renderGallery(mount, slug) {
 function renderDetail(mount) {
   const p = PROJECTS.find((x) => x.id === slugParam());
   if (!p) {
+    document.title = 'Not found — Kevin Wang';
+    setMeta('meta[name="robots"]', 'name', 'robots', 'noindex');   // don't let a bad ?slug get indexed as a soft-404
     mount.innerHTML = '<p class="detail-missing mono">Project not found — <a href="/">return home ↗</a></p>';
     return;
   }
@@ -253,6 +255,8 @@ function renderJournal(mount) {
 function renderPost(mount) {
   const p = postBySlug(slugParam());
   if (!p) {
+    document.title = 'Not found — Kevin Wang';
+    setMeta('meta[name="robots"]', 'name', 'robots', 'noindex');
     mount.innerHTML = '<p class="post-missing mono">Post not found — <a href="/journal.html">all field notes →</a></p>';
     return;
   }

@@ -20,8 +20,8 @@ function collectImages() {
   PROJECTS.forEach((p) => {
     if (!FIELD_DISCIPLINES.includes(p.discipline)) return;
     const href = `project.html?slug=${encodeURIComponent(p.id)}`;
-    if (p.cover) out.push({ src: p.cover, title: p.title, href });
-    (p.gallery || []).forEach((g) => out.push({ src: g, title: p.title, href }));
+    if (p.cover) out.push({ src: p.cover, title: p.title, href, alt: `${p.title} — cover` });
+    (p.gallery || []).forEach((g, i) => out.push({ src: g, title: p.title, href, alt: `${p.title} — view ${i + 1}` }));
   });
   return out;
 }
@@ -69,7 +69,7 @@ export function initField() {
       const d = IMAGE_DIMS[it.src];
       const dim = d ? ` width="${d[0]}" height="${d[1]}"` : '';   // reserve aspect so layout (and the tour) is correct before load
       return `<a class="field-img" href="${esc(it.href)}" data-label="" style="left:${x}px;top:${y}px;width:${w}px">` +
-        `<img src="${esc(it.src)}" alt="${esc(it.title)}"${dim} loading="lazy" decoding="async" draggable="false">` +
+        `<img src="${esc(it.src)}" alt="${esc(it.alt || it.title)}"${dim} loading="lazy" decoding="async" draggable="false">` +
         `<span class="fi-cap">${esc(it.title)}</span></a>`;
     }).join('');
   }

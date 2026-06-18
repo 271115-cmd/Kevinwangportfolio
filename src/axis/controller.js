@@ -20,15 +20,20 @@ export function initAxis() {
   if (!canvas) return;
 
   const state = createAxisState();
-  const scene = createScene(canvas);
+  // WebGL can be unavailable (old device, disabled, GPU blocklist). If the
+  // renderer throws, fall back gracefully: hide the decorative canvas and let
+  // the textual journey (narration + component list + sections) carry it alone.
+  let scene = null;
+  try { scene = createScene(canvas); }
+  catch { canvas.style.display = 'none'; document.body.classList.add('axis-nogl'); }
   const ui = createUI({
     onGoto: scrollToIndex,
     onToggleGround: () => state.toggleGround(),
   });
   ui.mount();
 
-  // the ONE wiring: state → every subsystem
-  state.subscribe((s) => scene.applyState(s));
+  // the ONE wiring: state → every subsystem (scene only if WebGL came up)
+  if (scene) state.subscribe((s) => scene.applyState(s));
   state.subscribe((s) => ui.update(s));
 
   // scroll → state (the only scroll coupling in the whole system)
@@ -39,7 +44,7 @@ export function initAxis() {
   });
 
   // presentation: fade the canvas out as the content sections take over
-  ScrollTrigger.create({
+  if (scene) ScrollTrigger.create({
     trigger: '.axis-section', start: 'top 75%',
     onEnter: () => { canvas.style.opacity = '0'; },
     onLeaveBack: () => { canvas.style.opacity = '1'; },
