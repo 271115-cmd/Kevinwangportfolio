@@ -397,6 +397,30 @@ body.axis-active .axis-controls { opacity: 1; visibility: visible; }
 /* ============================================================
    REVEAL — barely anything (restraint)
    ============================================================ */
+/* ---- Save as PDF — a clean linear portfolio document, print only ---- */
+.print-doc { display: none; }
+@media print {
+  html, body { background: #fff; }
+  body > *:not(.print-doc) { display: none !important; }
+  .print-doc { display: block; color: #111; font-size: 11pt; line-height: 1.45; }
+  .print-doc h1 { font-size: 26pt; line-height: 1.05; }
+  .print-doc h2 { font-size: 16pt; margin: 0 0 .4rem; }
+  .print-doc h3 { font-size: 13pt; }
+  .pd-cover { min-height: 60vh; display: flex; flex-direction: column; justify-content: flex-end; gap: .3rem; break-after: page; }
+  .pd-cover .pd-role, .pd-cover .pd-contact { font-family: var(--font-mono); font-size: 9pt; }
+  .pd-cover .pd-tag { max-width: 60ch; }
+  .pd-sec { break-before: page; }
+  .pd-sec-h { border-bottom: 1px solid #ccc; padding-bottom: .3rem; }
+  .pd-proj { break-inside: avoid; margin: 1.2rem 0 1.6rem; }
+  .pd-meta { font-family: var(--font-mono); font-size: 8.5pt; color: #555; margin: .15rem 0; }
+  .pd-sum { max-width: 64ch; margin: .3rem 0 .6rem; }
+  .pd-body { max-width: 64ch; }
+  .pd-fig { break-inside: avoid; margin: .5rem 0; }
+  .pd-fig img { max-width: 100%; height: auto; }
+  .pd-fig figcaption { font-family: var(--font-mono); font-size: 8pt; color: #555; margin-top: .2rem; }
+  @page { margin: 16mm; }
+}
+
 /* ---- drawing viewer (lightbox) — read plans/sections closely ---- */
 img[data-zoom] { cursor: zoom-in; }
 body.lb-open { overflow: hidden; }

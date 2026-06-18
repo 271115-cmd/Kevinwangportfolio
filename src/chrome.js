@@ -56,6 +56,7 @@ function dropdownHTML(activePage) {
     `<div class="dd-foot">` +
       `<span>${esc(SITE.tagline)}</span>` +
       `<a href="mailto:${esc(SITE.email)}" data-no-transition>${esc(SITE.email)}</a>` +
+      `<a href="#" data-print data-no-transition>Save as PDF ↓</a>` +
     `</div>`
   );
 }
@@ -74,6 +75,7 @@ function footerHTML() {
     `<div class="foot-meta">` +
       `<span>${esc(SITE.name)} · ${esc(SITE.role)}</span>` +
       `<span class="foot-social">${social}</span>` +
+      `<a href="#" data-print data-no-transition>Save as PDF ↓</a>` +
       `<span>© ${esc(year)}</span>` +
     `</div>`
   );

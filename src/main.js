@@ -42,3 +42,10 @@ if (document.getElementById('field-wrap')) {
 if (document.querySelector('img[data-zoom], [data-render="detail"]')) {
   import('./lightbox.js').then((m) => m.initLightbox());
 }
+
+// "Save as PDF" — build + print a clean portfolio document on demand (lazy)
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('[data-print]')) return;
+  e.preventDefault();
+  import('./print.js').then((m) => m.printPortfolio());
+});
