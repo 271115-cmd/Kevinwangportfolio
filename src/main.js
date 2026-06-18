@@ -37,3 +37,8 @@ if (document.getElementById('axis-canvas')) {
 if (document.getElementById('field-wrap')) {
   import('./field.js').then((m) => m.initField());
 }
+
+// Drawing viewer — wherever a zoomable image is rendered (project detail pages)
+if (document.querySelector('img[data-zoom], [data-render="detail"]')) {
+  import('./lightbox.js').then((m) => m.initLightbox());
+}

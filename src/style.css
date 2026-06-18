@@ -397,6 +397,21 @@ body.axis-active .axis-controls { opacity: 1; visibility: visible; }
 /* ============================================================
    REVEAL — barely anything (restraint)
    ============================================================ */
+/* ---- drawing viewer (lightbox) — read plans/sections closely ---- */
+img[data-zoom] { cursor: zoom-in; }
+body.lb-open { overflow: hidden; }
+#lightbox { position: fixed; inset: 0; z-index: 9970; background: rgba(255, 255, 255, 0.97); }
+#lightbox .lb-stage { position: absolute; inset: 0; display: grid; place-items: center; overflow: hidden; touch-action: none; cursor: grab; }
+#lightbox.is-zoomed .lb-stage { cursor: grab; }
+#lightbox .lb-img { max-width: 90vw; max-height: 82vh; display: block; user-select: none; background: var(--paper-2);
+  box-shadow: 0 2px 40px rgba(25, 22, 15, 0.10); will-change: transform; }
+#lightbox .lb-close { position: fixed; top: var(--pad); right: var(--pad); }
+#lightbox .lb-cap { position: fixed; left: 0; right: 0; bottom: var(--pad); margin: 0; text-align: center; padding: 0 var(--pad); color: var(--ink); pointer-events: none; }
+#lightbox .lb-nav { position: fixed; top: 50%; transform: translateY(-50%); font-size: 1.4rem; line-height: 1; padding: .8rem 1rem; }
+#lightbox .lb-prev { left: calc(var(--pad) - .4rem); }
+#lightbox .lb-next { right: calc(var(--pad) - .4rem); }
+@media (hover: none), (pointer: coarse) { #lightbox .lb-nav { display: none; } }
+
 /* quiet display hierarchy — one restrained larger size for page/work titles,
    normal weight, tight leading (considered, not louder) */
 .section-head .sh-title, .detail-title, .post-title {

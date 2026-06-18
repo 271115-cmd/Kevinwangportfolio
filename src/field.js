@@ -24,7 +24,7 @@ function collectImages() {
     const href = `project.html?slug=${encodeURIComponent(p.id)}`;
     const imgs = [];
     if (p.cover) imgs.push({ src: p.cover, title: p.title, href, alt: `${p.title} — cover` });
-    (p.gallery || []).forEach((g, i) => imgs.push({ src: g, title: p.title, href, alt: `${p.title} — view ${i + 1}` }));
+    (p.gallery || []).forEach((g, i) => imgs.push({ src: typeof g === 'string' ? g : g.src, title: p.title, href, alt: `${p.title} — view ${i + 1}` }));
     return imgs;
   }).filter((a) => a.length);
   const out = [];

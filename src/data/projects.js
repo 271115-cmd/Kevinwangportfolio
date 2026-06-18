@@ -7,11 +7,15 @@
    all DERIVED from this data — never hand-maintained.
 
    Optional per-project fields a detail page understands:
-     gallery: ['/work/<id>/01.webp', ...]   real plates (no fakes are shown)
+     gallery: ['/work/<id>/01.webp', ...]   real plates (no fakes are shown).
+              An entry may also be { src, caption } — the caption shows under
+              the plate AND in the zoom viewer (click a plate to read it close).
+              Lead with plans / sections / process drawings, not just renders.
      body:    '<p>…</p><h2>…</h2><p>…</p>'   a written case study (concept /
               process / outcome), trusted HTML — renders between hero + plates.
-              The strongest lever for architecture admissions; add it to the
-              studio pieces first.
+              The strongest lever for architecture admissions.
+     studio:  'Design Studio IV · Prof. …'   shown in the spec sheet (optional)
+     software:'Rhino · Grasshopper · …'       shown in the spec sheet (optional)
    ============================================================ */
 
 export const DISCIPLINES = [

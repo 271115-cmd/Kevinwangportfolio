@@ -147,8 +147,8 @@ function renderDetail(mount) {
   // lead image — real cover or generated brutalist placeholder
   const hero = coverFor(p, '00', cat);
 
-  // plates: ONLY real gallery images — never fake "placeholder" plates on a live site
-  const plates = (p.gallery || []).map((src, n) => ({ src, n }));
+  // plates: ONLY real gallery images. An entry is a path string OR { src, caption }.
+  const plates = (p.gallery || []).map((g, n) => ({ src: typeof g === 'string' ? g : g.src, caption: typeof g === 'string' ? '' : (g.caption || ''), n }));
   const plateSpans = spanRhythm(plates.length);
 
   // spec sheet — one row per known fact; absent/em-dash fields silently drop
@@ -163,12 +163,13 @@ function renderDetail(mount) {
   // optional written case study (trusted HTML in projects.js, like journal posts) — renders only when present
   const bodyHtml = p.body ? `<section class="detail-body">${p.body}</section>` : '';
 
-  const platesHtml = plates.map((pl, idx) =>
-    `<figure class="detail-plate reveal-plate" data-span="${plateSpans[idx]}">` +
-      `<img src="${pl.src}" alt="${esc(p.title)} — plate ${pad2(pl.n + 1)}"${dimAttr(pl.src)} loading="lazy">` +
-      `<figcaption class="dp-cap">Plate ${pad2(pl.n + 1)}</figcaption>` +
-    `</figure>`
-  ).join('');
+  const platesHtml = plates.map((pl, idx) => {
+    const c = pl.caption || `Plate ${pad2(pl.n + 1)}`;
+    return `<figure class="detail-plate reveal-plate" data-span="${plateSpans[idx]}">` +
+      `<img src="${pl.src}" alt="${esc(pl.caption || `${p.title} — plate ${pad2(pl.n + 1)}`)}"${dimAttr(pl.src)} loading="lazy" data-zoom data-cap="${esc(c)}">` +
+      `<figcaption class="dp-cap">${esc(c)}</figcaption>` +
+    `</figure>`;
+  }).join('');
 
   const navLink = (q, dir) =>
     `<a href="${esc(detailHref(q))}" data-label="${esc(cat)}"><span class="dn-dir">${dir}</span><span class="dn-title">${esc(q.title)}</span></a>`;
@@ -185,11 +186,11 @@ function renderDetail(mount) {
         `</div>` +
         `<aside class="detail-spec">` +
           `<h3 class="ds-h mono">Project</h3>` +
-          `<ul>${specRow('Role', p.role)}${specRow('Year', p.year)}${specRow('Where', p.location)}${tagRow}</ul>` +
+          `<ul>${specRow('Role', p.role)}${specRow('Studio', p.studio)}${specRow('Year', p.year)}${specRow('Where', p.location)}${specRow('Software', p.software)}${tagRow}</ul>` +
         `</aside>` +
       `</div>` +
     `</header>` +
-    `<figure class="detail-hero reveal-plate"><img src="${hero}" alt="${esc(p.title)} — ${esc(cat)}"${dimAttr(hero)} loading="lazy"></figure>` +
+    `<figure class="detail-hero reveal-plate"><img src="${hero}" alt="${esc(p.title)} — ${esc(cat)}"${dimAttr(hero)} loading="lazy"${p.cover ? ` data-zoom data-cap="${esc(p.title)}"` : ''}></figure>` +
     bodyHtml +
     (plates.length ? `<div class="detail-gallery">${platesHtml}</div>` : '') +
     (sibs.length > 1
