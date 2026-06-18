@@ -87,11 +87,14 @@ export function initField() {
   const PAN_SPEED = 0.75;               // screen-px per ms → constant pan speed across legs
   const MIN_DUR = 900, MAX_DUR = 3200;  // clamp a leg's duration (very short / very long jumps)
 
+  const OPEN_TILES = 8;   // frame ~6–8 works on first paint, on any viewport
   function homeView() {
-    const fit = Math.min(wrap.clientWidth / WORLD.w, wrap.clientHeight / WORLD.h) * 2.1;
-    scT = Math.max(MIN, Math.min(MAX, fit));
-    txT = (wrap.clientWidth - WORLD.w * scT) / 2;
-    tyT = (wrap.clientHeight - WORLD.h * scT) / 2;
+    const vw = wrap.clientWidth, vh = wrap.clientHeight;
+    // scale so the viewport spans roughly OPEN_TILES of the evenly-spread world
+    const s = Math.sqrt((items.length * vw * vh) / (OPEN_TILES * WORLD.w * WORLD.h));
+    scT = Math.max(MIN, Math.min(MAX, s));
+    txT = (vw - WORLD.w * scT) / 2;
+    tyT = (vh - WORLD.h * scT) / 2;
     vx = vy = 0;
   }
   function zoomAt(cx, cy, f) {
@@ -189,24 +192,48 @@ export function initField() {
   const stopWalk = () => { if (walk) setWalk(false); };
   if (walkBtn) walkBtn.addEventListener('click', () => setWalk(!walk));
 
-  /* drag to pan (with velocity for momentum) */
+  /* drag to pan (momentum); two-finger pinch to zoom on touch */
+  const pointers = new Map();
+  let pinchDist = 0;
+  const pts = () => [...pointers.values()];
+  const pinchSpan = () => { const a = pts(); return Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y); };
+  const pinchMid = () => { const a = pts(); return { x: (a[0].x + a[1].x) / 2, y: (a[0].y + a[1].y) / 2 }; };
+
   wrap.addEventListener('pointerdown', (e) => {
     if (e.target.closest('.field-corner')) return;
     stopWalk();
-    down = true; moved = 0; lastX = e.clientX; lastY = e.clientY; vx = vy = 0;
-    wrap.classList.add('grabbing');
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointers.size === 1) { down = true; moved = 0; lastX = e.clientX; lastY = e.clientY; vx = vy = 0; wrap.classList.add('grabbing'); }
+    else if (pointers.size === 2) { down = false; moved = 99; pinchDist = pinchSpan(); }   // 2nd finger → pinch; suppress click-nav
   });
   wrap.addEventListener('pointermove', (e) => {
     moveCursor(e);
+    if (!pointers.has(e.pointerId)) return;
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointers.size >= 2) {                                   // pinch-zoom toward the midpoint
+      const d = pinchSpan();
+      if (pinchDist > 0) { const m = pinchMid(); zoomAt(m.x, m.y, d / pinchDist); }
+      pinchDist = d; vx = vy = 0;
+      return;
+    }
     if (!down) return;
     const dx = e.clientX - lastX, dy = e.clientY - lastY;
     txT += dx; tyT += dy; vx = dx; vy = dy; moved += Math.abs(dx) + Math.abs(dy);
     lastX = e.clientX; lastY = e.clientY;
   });
-  const end = () => { down = false; wrap.classList.remove('grabbing'); };
-  wrap.addEventListener('pointerup', end);
-  wrap.addEventListener('pointercancel', end);
+  function liftPointer(e) {
+    pointers.delete(e.pointerId);
+    if (pointers.size === 1) { const p = pts()[0]; down = true; lastX = p.x; lastY = p.y; vx = vy = 0; }   // pinch → resume pan
+    else if (pointers.size === 0) { down = false; wrap.classList.remove('grabbing'); }
+  }
+  wrap.addEventListener('pointerup', liftPointer);
+  wrap.addEventListener('pointercancel', liftPointer);
   field.addEventListener('click', (e) => { if (moved > 6) { e.preventDefault(); e.stopPropagation(); } }, true);
+
+  /* touch devices: auto-start the guided tour so the work reveals itself (any input stops it) */
+  if (matchMedia('(pointer: coarse)').matches && !reduced.matches) {
+    setTimeout(() => { if (!walk && !down && pointers.size === 0) setWalk(true); }, 1200);
+  }
 
   /* trackpad / wheel: scroll = walk around (pan); pinch or ctrl+wheel = zoom */
   wrap.addEventListener('wheel', (e) => {

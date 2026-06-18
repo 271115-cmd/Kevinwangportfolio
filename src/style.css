@@ -150,6 +150,9 @@ body.dd-open #dd-scrim { pointer-events: auto; }
   .field-cursor { display: none; }
   /* touch: give the corner controls a >=44px hit area (WCAG 2.5.5) without bloating the glyph */
   .field-corner a, .field-corner button { min-height: 44px; display: inline-flex; align-items: center; padding-block: .35rem; }
+  /* bottom chrome: keep the statement to the left half; stack Index above About on the right so they never collide */
+  .field-statement { max-width: 50vw; }
+  .field-bc { left: auto; right: var(--pad); transform: none; bottom: calc(var(--pad) + 3rem); }
 }
 
 /* ============================================================
