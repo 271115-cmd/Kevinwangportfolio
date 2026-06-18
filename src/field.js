@@ -1,10 +1,13 @@
 /* ============================================================
-   field.js — the home "field": the spatial/built work scattered
-   across a plane you walk around. Drag/wheel pan with momentum;
-   buttons (and pinch) zoom; Re-lay re-scatters; "Walk around" runs a
-   guided tour that frames each work in turn. Plain DOM + one rAF loop.
-   Curated to architecture + models (the calm, built work) — the
-   loud graphic/object/web pieces live one click away in the Index.
+   field.js — the home "field": an INFINITE plane of the work that
+   you walk around. Drag/wheel pan with momentum; pinch / buttons
+   zoom; "Walk around" wanders the plane, framing works in turn.
+
+   The plane is a virtual cell grid (no fixed world): each cell maps
+   deterministically to a work image. Only cells in (or just past)
+   the viewport are mounted in the DOM — tiles that scroll off are
+   removed, so memory + work stay bounded however far you roam.
+   Images are chosen to avoid repeating on a single visible screen.
    ============================================================ */
 
 import { PROJECTS } from './data/projects.js';
@@ -13,17 +16,21 @@ import { IMAGE_DIMS } from './data/imagedims.js';
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) =>
   ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-const FIELD_DISCIPLINES = ['architecture', 'models'];
-
+/* all the work — covers + galleries across every discipline, round-robined by
+   project so each project's images are spread far apart across the plane (a
+   project rarely shows twice in one viewport, even though images differ). */
 function collectImages() {
-  const out = [];
-  PROJECTS.forEach((p) => {
-    if (!FIELD_DISCIPLINES.includes(p.discipline)) return;
+  const byProject = PROJECTS.map((p) => {
     const href = `project.html?slug=${encodeURIComponent(p.id)}`;
-    if (p.cover) out.push({ src: p.cover, title: p.title, href, alt: `${p.title} — cover` });
-    (p.gallery || []).forEach((g, i) => out.push({ src: g, title: p.title, href, alt: `${p.title} — view ${i + 1}` }));
-  });
-  return out;
+    const imgs = [];
+    if (p.cover) imgs.push({ src: p.cover, title: p.title, href, alt: `${p.title} — cover` });
+    (p.gallery || []).forEach((g, i) => imgs.push({ src: g, title: p.title, href, alt: `${p.title} — view ${i + 1}` }));
+    return imgs;
+  }).filter((a) => a.length);
+  const out = [];
+  const rounds = Math.max(0, ...byProject.map((a) => a.length));
+  for (let r = 0; r < rounds; r++) for (const imgs of byProject) if (imgs[r]) out.push(imgs[r]);
+  return out;   // [proj0 cover, proj1 cover, …, proj0 view1, proj1 view1, …]
 }
 
 export function initField() {
@@ -31,70 +38,35 @@ export function initField() {
   const field = document.getElementById('field');
   if (!wrap || !field) return;
   const items = collectImages();
-  if (!items.length) return;
+  const M = items.length;
+  if (!M) return;
 
-  const WORLD = { w: 2000, h: 1400 };
-  const MIN = 0.5, MAX = 3.5;
+  const CELL = 480;                       // world px per virtual cell (controls density)
+  const MIN = 0.4, MAX = 3.2;
+  const FRAME_W = 0.6, FRAME_H = 0.72;    // fraction of viewport a framed work fills
+  const OPEN_TILES = 7;                   // ~works framed on first paint
+  const DWELL_MS = 1500, PAN_SPEED = 0.75, MIN_DUR = 900, MAX_DUR = 3200;
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
-  let seed = 7;
-  const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
-  // a tour stop's layout box (world units); fall back to a landscape guess until the image loads
-  const stopCenter = (el) => {
-    const w = el.offsetWidth, h = el.offsetHeight || w * 0.7;
-    return { w, h, cx: el.offsetLeft + w / 2, cy: el.offsetTop + h / 2 };
-  };
 
-  const idxBtn = wrap.querySelector('.field-index');
-  if (idxBtn) idxBtn.addEventListener('click', () => document.getElementById('menu-toggle')?.click());
-
-  /* grid-jitter scatter — one image per cell so nothing overlaps */
-  function place() {
-    const n = items.length;
-    const cols = Math.max(1, Math.round(Math.sqrt(n * (WORLD.w / WORLD.h))));
-    const rows = Math.ceil(n / cols);
-    const cellW = WORLD.w / cols, cellH = WORLD.h / rows;
-    const GAP = Math.min(cellW, cellH) * 0.12;
-    const RES = 1.2;                                          // vertical reservation (most tiles are landscape)
-    const maxW = Math.min(cellW - GAP, (cellH - GAP) / RES);
-    const order = items.map((_, i) => i);
-    for (let i = order.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
-    field.style.width = WORLD.w + 'px';
-    field.style.height = WORLD.h + 'px';
-    field.innerHTML = order.map((idx, slot) => {
-      const it = items[idx];
-      const col = slot % cols, row = Math.floor(slot / cols);
-      const w = Math.round(maxW * (0.76 + rnd() * 0.22));
-      const x = Math.round(col * cellW + GAP / 2 + rnd() * Math.max(0, cellW - w - GAP));
-      const y = Math.round(row * cellH + GAP / 2 + rnd() * Math.max(0, cellH - w * RES - GAP));
-      const d = IMAGE_DIMS[it.src];
-      const dim = d ? ` width="${d[0]}" height="${d[1]}"` : '';   // reserve aspect so layout (and the tour) is correct before load
-      return `<a class="field-img" href="${esc(it.href)}" data-label="" style="left:${x}px;top:${y}px;width:${w}px">` +
-        `<img src="${esc(it.src)}" alt="${esc(it.alt || it.title)}"${dim} loading="lazy" decoding="async" draggable="false">` +
-        `<span class="fi-cap">${esc(it.title)}</span></a>`;
-    }).join('');
+  let seedOff = 0;                        // bumped by Re-lay to re-scatter the whole plane
+  // deterministic pseudo-random in [0,1) for a cell + salt (stable while seedOff holds)
+  function h(cx, cy, salt) {
+    let n = Math.imul((cx | 0) + 0x9e37, 374761393) + Math.imul((cy | 0) + 0x85eb, 668265263) + Math.imul(salt + seedOff * 131, 2246822519);
+    n = Math.imul(n ^ (n >>> 15), 2654435761);
+    n ^= n >>> 13;
+    return ((n >>> 0) % 1000000) / 1000000;
   }
+  const imgBase = (cx, cy) => Math.floor(h(cx, cy, 1) * M) % M;
 
-  /* view: current eased toward a target; drag adds momentum */
+  /* ---- view: current eased toward target; drag adds momentum ---- */
   let tx = 0, ty = 0, sc = 1, txT = 0, tyT = 0, scT = 1, vx = 0, vy = 0;
   let down = false, lastX = 0, lastY = 0, moved = 0;
-  // "Walk around" — a guided tour that steps between the works, one at a time.
-  // Each leg is a time-based tween: ease-in-out (no lurch) with duration set by
-  // the distance travelled, so every leg pans at the same steady speed.
-  let walk = false, stopsEls = [], tourIdx = 0, toured = 0;
-  let phase = 'travel', tweenFrom = null, tweenTo = null, tweenStart = 0, tweenDur = 0, dwellUntil = 0;
-  const FRAME_W = 0.6, FRAME_H = 0.72;  // fraction of the viewport a framed work fills
-  const DWELL_MS = 1500;                // pause on each work
-  const PAN_SPEED = 0.75;               // screen-px per ms → constant pan speed across legs
-  const MIN_DUR = 900, MAX_DUR = 3200;  // clamp a leg's duration (very short / very long jumps)
 
-  const OPEN_TILES = 8;   // frame ~6–8 works on first paint, on any viewport
+  const OPEN_TILES_AREA = OPEN_TILES * CELL * CELL;
   function homeView() {
     const vw = wrap.clientWidth, vh = wrap.clientHeight;
-    // scale so the viewport spans roughly OPEN_TILES of the evenly-spread world
-    const s = Math.sqrt((items.length * vw * vh) / (OPEN_TILES * WORLD.w * WORLD.h));
-    scT = Math.max(MIN, Math.min(MAX, s));
-    txT = (vw - WORLD.w * scT) / 2;
-    tyT = (vh - WORLD.h * scT) / 2;
+    scT = Math.max(MIN, Math.min(MAX, Math.sqrt((vw * vh) / OPEN_TILES_AREA)));
+    txT = vw / 2; tyT = vh / 2;           // world origin (0,0) at the viewport centre
     vx = vy = 0;
   }
   function zoomAt(cx, cy, f) {
@@ -102,96 +74,154 @@ export function initField() {
     const r = ns / scT;
     txT = cx - (cx - txT) * r; tyT = cy - (cy - tyT) * r; scT = ns;
   }
-  // soft bounds — the work can never be flung entirely off-screen
-  function clampXY(x, y, s) {
-    const W = WORLD.w * s, H = WORLD.h * s, vw = wrap.clientWidth, vh = wrap.clientHeight;
-    return [Math.max(vw * 0.3 - W, Math.min(vw * 0.7, x)), Math.max(vh * 0.3 - H, Math.min(vh * 0.7, y))];
-  }
-  function clampTarget() { [txT, tyT] = clampXY(txT, tyT, scT); }
 
-  // the framed, clamped view that centers stop i — read live size so it self-corrects as the image loads
-  function stopView(i) {
-    const el = stopsEls[i];
+  /* ---- virtualization: mount only the cells in (or just past) view ---- */
+  const mounted = new Map();              // "cx,cy" -> { el, img, href }
+  const projCount = new Map();            // project href -> count on screen
+  const imgCount = new Map();             // image index  -> count on screen
+  let rangeKey = '';
+  const bumpProj = (h, d) => projCount.set(h, Math.max(0, (projCount.get(h) || 0) + d));
+  const bumpImg = (i, d) => imgCount.set(i, Math.max(0, (imgCount.get(i) || 0) + d));
+
+  function makeTile(cx, cy) {
+    const base = imgBase(cx, cy);
+    let img = -1;
+    // prefer a project not already on screen → no work repeats in view; fall back to a distinct image
+    for (let t = 0; t < M; t++) { const c = (base + t) % M; if (!(projCount.get(items[c].href) > 0)) { img = c; break; } }
+    if (img < 0) for (let t = 0; t < M; t++) { const c = (base + t) % M; if (!(imgCount.get(c) > 0)) { img = c; break; } }
+    if (img < 0) img = base;              // saturated (more tiles than works) — allow a repeat
+    const it = items[img];
+    const d = IMAGE_DIMS[it.src];
+    const aspect = d ? d[0] / d[1] : 1.4;
+    const w = Math.round(CELL * (0.46 + h(cx, cy, 2) * 0.26));
+    const ih = w / aspect;
+    const x = Math.round(cx * CELL + h(cx, cy, 3) * Math.max(0, CELL - w));
+    const y = Math.round(cy * CELL + h(cx, cy, 4) * Math.max(0, CELL - ih));
+    const el = document.createElement('a');
+    el.className = 'field-img';
+    el.href = it.href;
+    el.style.cssText = `left:${x}px;top:${y}px;width:${w}px`;
+    el.innerHTML =
+      `<img src="${esc(it.src)}" alt="${esc(it.alt || it.title)}"${d ? ` width="${d[0]}" height="${d[1]}"` : ''} loading="lazy" decoding="async" draggable="false">` +
+      `<span class="fi-cap">${esc(it.title)}</span>`;
+    return { el, img, href: it.href };
+  }
+
+  function virtualize() {
+    const vw = wrap.clientWidth, vh = wrap.clientHeight;   // mount only cells that overlap the viewport
+    const c0 = Math.floor((-tx / sc) / CELL), c1 = Math.floor(((vw - tx) / sc) / CELL);
+    const r0 = Math.floor((-ty / sc) / CELL), r1 = Math.floor(((vh - ty) / sc) / CELL);
+    const rk = `${c0}.${c1}.${r0}.${r1}`;
+    if (rk === rangeKey) return;          // cell range unchanged — nothing to mount/unmount
+    rangeKey = rk;
+    for (const [key, t] of mounted) {     // unmount what scrolled out (frees its DOM + image)
+      const k = key.indexOf(','), cx = +key.slice(0, k), cy = +key.slice(k + 1);
+      if (cx < c0 || cx > c1 || cy < r0 || cy > r1) { t.el.remove(); bumpProj(t.href, -1); bumpImg(t.img, -1); mounted.delete(key); }
+    }
+    for (let cy = r0; cy <= r1; cy++) for (let cx = c0; cx <= c1; cx++) {
+      const key = cx + ',' + cy;
+      if (mounted.has(key)) continue;
+      const t = makeTile(cx, cy);
+      field.appendChild(t.el); bumpProj(t.href, 1); bumpImg(t.img, 1); mounted.set(key, t);
+    }
+  }
+  function clearField() {
+    mounted.forEach((t) => t.el.remove());
+    mounted.clear(); projCount.clear(); imgCount.clear(); rangeKey = '';
+  }
+
+  /* ---- "Walk around" — wander the plane, framing one work per leg ---- */
+  let walk = false, toured = 0, heading = 0, tourEl = null;
+  let phase = 'travel', tweenFrom = null, tweenTo = null, tweenStart = 0, tweenDur = 0, dwellUntil = 0;
+  const stopCenter = (el) => { const w = el.offsetWidth, ht = el.offsetHeight || w * 0.7; return { w, h: ht, cx: el.offsetLeft + w / 2, cy: el.offsetTop + ht / 2 }; };
+  const worldCenter = () => ({ x: (wrap.clientWidth / 2 - tx) / sc, y: (wrap.clientHeight / 2 - ty) / sc });
+
+  function stopView(el) {
     if (!el) return null;
     const vw = wrap.clientWidth, vh = wrap.clientHeight;
-    const { w, h, cx, cy } = stopCenter(el);
-    const s = Math.max(MIN, Math.min(MAX, Math.min(vw * FRAME_W / w, vh * FRAME_H / h)));
-    const [x, y] = clampXY(vw / 2 - cx * s, vh / 2 - cy * s, s);
-    return { x, y, s };
+    const { w, h: ht, cx, cy } = stopCenter(el);
+    const s = Math.max(MIN, Math.min(MAX, Math.min(vw * FRAME_W / w, vh * FRAME_H / ht)));
+    return { x: vw / 2 - cx * s, y: vh / 2 - cy * s, s };     // no clamp — the plane is infinite
   }
-  // begin a tween from the current view to stop tourIdx; duration ∝ distance → equal speed
+  // nearest mounted tile to a world point (optionally excluding the current one)
+  function nearestTile(px, py, exclude) {
+    let best = null, bestD = Infinity;
+    for (const t of mounted.values()) {
+      if (t.el === exclude) continue;
+      const w = t.el.offsetWidth, ht = t.el.offsetHeight || w * 0.7;
+      const dx = t.el.offsetLeft + w / 2 - px, dy = t.el.offsetTop + ht / 2 - py;
+      const d = dx * dx + dy * dy;
+      if (d < bestD) { bestD = d; best = t.el; }
+    }
+    return best;
+  }
+  function pickNext() {
+    const c = worldCenter();
+    return nearestTile(c.x + Math.cos(heading) * CELL * 1.4, c.y + Math.sin(heading) * CELL * 1.4, tourEl);
+  }
   function startLeg() {
     tweenFrom = { x: tx, y: ty, s: sc };
-    tweenTo = stopView(tourIdx) || tweenFrom;
+    tweenTo = stopView(tourEl) || tweenFrom;
     const d = Math.hypot(tweenTo.x - tx, tweenTo.y - ty);
     tweenDur = reduced.matches ? 0 : Math.max(MIN_DUR, Math.min(MAX_DUR, d / PAN_SPEED));
     tweenStart = performance.now();
     phase = 'travel';
   }
-  // reveal the framed work's name — the same caption a hover shows — until the tour reaches the next
-  function markCurrent() {
-    stopsEls.forEach((el, i) => el.classList.toggle('is-current', i === tourIdx));
-  }
-  function clearCurrent() {
-    stopsEls.forEach((el) => el.classList.remove('is-current'));
-  }
+  function markCurrent() { mounted.forEach((t) => t.el.classList.toggle('is-current', t.el === tourEl)); }
+  function clearCurrent() { mounted.forEach((t) => t.el.classList.remove('is-current')); }
 
   function tick(now) {
-    if (walk && !down && stopsEls.length && tweenTo) {
+    if (walk && !down && tourEl && tweenTo) {
       if (phase === 'travel') {
         const p = tweenDur > 0 ? Math.min(1, (now - tweenStart) / tweenDur) : 1;
-        const e = p * p * (3 - 2 * p);                 // smoothstep — eases in and out, zero velocity at both ends
+        const e = p * p * (3 - 2 * p);                  // smoothstep — eases in and out
         tx = tweenFrom.x + (tweenTo.x - tweenFrom.x) * e;
         ty = tweenFrom.y + (tweenTo.y - tweenFrom.y) * e;
         sc = tweenFrom.s + (tweenTo.s - tweenFrom.s) * e;
-        if (p >= 1) { phase = 'dwell'; dwellUntil = now + DWELL_MS; markCurrent(); }   // arrived — show this work's name
-      } else {                                         // dwell — hold on the work, then move to the next
+        if (p >= 1) { phase = 'dwell'; dwellUntil = now + DWELL_MS; markCurrent(); }
+      } else {
         tx = tweenTo.x; ty = tweenTo.y; sc = tweenTo.s;
         if (now >= dwellUntil) {
           toured += 1;
-          // reduced motion: no perpetual loop — show each work once, then stop (WCAG 2.3.3 / 2.2.2)
-          if (reduced.matches && toured >= stopsEls.length) setWalk(false);
-          else { tourIdx = (tourIdx + 1) % stopsEls.length; startLeg(); }
+          if (reduced.matches && toured >= 6) setWalk(false);   // finite under reduced motion (WCAG 2.3.3/2.2.2)
+          else { heading += (h(toured, 7, 9) - 0.5) * 1.1; tourEl = pickNext() || tourEl; startLeg(); }
         }
       }
-      txT = tx; tyT = ty; scT = sc;                    // keep targets synced for a seamless handoff to manual control
+      txT = tx; tyT = ty; scT = sc;                     // keep targets synced for a seamless manual handoff
     } else {
       if (!down && (Math.abs(vx) > 0.04 || Math.abs(vy) > 0.04)) { txT += vx; tyT += vy; vx *= 0.93; vy *= 0.93; }
-      clampTarget();
       tx += (txT - tx) * 0.16; ty += (tyT - ty) * 0.16; sc += (scT - sc) * 0.16;
     }
+    virtualize();                                       // range-gated — only touches the DOM at cell crossings
     field.style.transform = `translate(${tx.toFixed(2)}px, ${ty.toFixed(2)}px) scale(${sc.toFixed(4)})`;
     requestAnimationFrame(tick);
   }
 
-  seed = 7; place(); homeView();
-  tx = txT; ty = tyT; sc = scT;           // first frame lands settled, then eases live
+  homeView();
+  tx = txT; ty = tyT; sc = scT;                         // first frame lands settled
+  virtualize();
   requestAnimationFrame(tick);
 
+  /* ---- Walk button + interaction ---- */
   const walkBtn = wrap.querySelector('.field-walk');
   const walkLabel = walkBtn?.querySelector('.fw-label');
   function setWalk(on) {
     walk = on; vx = vy = 0; toured = 0;
     if (on) {
-      stopsEls = Array.from(field.querySelectorAll('.field-img'));   // tour in reading order
-      // begin at the work nearest what you're already looking at, then sweep through the rest
-      const wx = (wrap.clientWidth / 2 - tx) / sc, wy = (wrap.clientHeight / 2 - ty) / sc;
-      let best = 0, bestD = Infinity;
-      stopsEls.forEach((el, i) => {
-        const { cx, cy } = stopCenter(el);
-        const dx = cx - wx, dy = cy - wy;
-        const d = dx * dx + dy * dy;
-        if (d < bestD) { bestD = d; best = i; }
-      });
-      tourIdx = best;
-      startLeg();
-    } else { tweenTo = null; clearCurrent(); }
-    if (walkBtn) walkBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
-    if (walkLabel) walkLabel.textContent = on ? 'Stop walking' : 'Walk around';
+      const c = worldCenter();
+      heading = h(Math.round(c.x), Math.round(c.y), 5) * Math.PI * 2;   // a fresh wander direction
+      tourEl = nearestTile(c.x, c.y, null);             // open on the work nearest the centre
+      if (tourEl) startLeg(); else walk = false;
+    } else { tweenTo = null; tourEl = null; clearCurrent(); }
+    if (walkBtn) walkBtn.setAttribute('aria-pressed', walk ? 'true' : 'false');
+    if (walkLabel) walkLabel.textContent = walk ? 'Stop walking' : 'Walk around';
   }
-  let userActed = false;   // set on first real input — cancels the pending auto-walk
+  let userActed = false;
   const stopWalk = () => { userActed = true; if (walk) setWalk(false); };
   if (walkBtn) walkBtn.addEventListener('click', () => setWalk(!walk));
+
+  const idxBtn = wrap.querySelector('.field-index');
+  if (idxBtn) idxBtn.addEventListener('click', () => document.getElementById('menu-toggle')?.click());
 
   /* drag to pan (momentum); two-finger pinch to zoom on touch */
   const pointers = new Map();
@@ -205,15 +235,15 @@ export function initField() {
     stopWalk();
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (pointers.size === 1) { down = true; moved = 0; lastX = e.clientX; lastY = e.clientY; vx = vy = 0; wrap.classList.add('grabbing'); }
-    else if (pointers.size === 2) { down = false; moved = 99; pinchDist = pinchSpan(); }   // 2nd finger → pinch; suppress click-nav
+    else if (pointers.size === 2) { down = false; moved = 99; pinchDist = pinchSpan(); }
   });
   wrap.addEventListener('pointermove', (e) => {
     moveCursor(e);
     if (!pointers.has(e.pointerId)) return;
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    if (pointers.size >= 2) {                                   // pinch-zoom toward the midpoint
+    if (pointers.size >= 2) {
       const d = pinchSpan();
-      if (pinchDist > 0) { const m = pinchMid(); zoomAt(m.x, m.y, d / pinchDist); }
+      if (pinchDist > 0) { const mid = pinchMid(); zoomAt(mid.x, mid.y, d / pinchDist); }
       pinchDist = d; vx = vy = 0;
       return;
     }
@@ -224,20 +254,19 @@ export function initField() {
   });
   function liftPointer(e) {
     pointers.delete(e.pointerId);
-    if (pointers.size === 1) { const p = pts()[0]; down = true; lastX = p.x; lastY = p.y; vx = vy = 0; }   // pinch → resume pan
+    if (pointers.size === 1) { const p = pts()[0]; down = true; lastX = p.x; lastY = p.y; vx = vy = 0; }
     else if (pointers.size === 0) { down = false; wrap.classList.remove('grabbing'); }
   }
   wrap.addEventListener('pointerup', liftPointer);
   wrap.addEventListener('pointercancel', liftPointer);
   field.addEventListener('click', (e) => { if (moved > 6) { e.preventDefault(); e.stopPropagation(); } }, true);
 
-  /* touch devices: auto-start the guided tour so the work reveals itself —
-     unless the user has already grabbed/zoomed first (stopWalk sets userActed) */
+  /* touch: auto-start the wander so the work reveals itself (unless the user grabs first) */
   if (matchMedia('(pointer: coarse)').matches && !reduced.matches) {
     setTimeout(() => { if (!userActed && !walk && !down && pointers.size === 0) setWalk(true); }, 1200);
   }
 
-  /* trackpad / wheel: scroll = walk around (pan); pinch or ctrl+wheel = zoom */
+  /* trackpad / wheel: scroll = pan; pinch / ctrl+wheel = zoom */
   wrap.addEventListener('wheel', (e) => {
     e.preventDefault();
     stopWalk();
@@ -251,28 +280,28 @@ export function initField() {
     const cx = wrap.clientWidth / 2, cy = wrap.clientHeight / 2, k = b.dataset.z;
     if (k === 'in') zoomAt(cx, cy, 1.3);
     else if (k === 'out') zoomAt(cx, cy, 1 / 1.3);
-    else if (k === 'reset') { seed = 7; place(); homeView(); }
-    else if (k === 'shuffle') { seed = (Math.floor(Math.random() * 1e7) + 1) | 0; place(); homeView(); }
+    else if (k === 'reset') homeView();
+    else if (k === 'shuffle') { seedOff += 1; clearField(); homeView(); }   // Re-lay → re-scatter the plane
   }));
   window.addEventListener('resize', homeView);
 
   /* keyboard pan / zoom (a11y) */
   wrap.tabIndex = 0;
   wrap.addEventListener('keydown', (e) => {
-    const cx = wrap.clientWidth / 2, cy = wrap.clientHeight / 2, STEP = 120;
-    if (['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','+','=','-','r','R'].includes(e.key)) stopWalk();
+    const cx = wrap.clientWidth / 2, cy = wrap.clientHeight / 2, STEP = 140;
+    if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', '+', '=', '-', 'r', 'R'].includes(e.key)) stopWalk();
     if (e.key === 'ArrowLeft') { txT += STEP; vx = 0; }
     else if (e.key === 'ArrowRight') { txT -= STEP; vx = 0; }
     else if (e.key === 'ArrowUp') { tyT += STEP; vy = 0; }
     else if (e.key === 'ArrowDown') { tyT -= STEP; vy = 0; }
     else if (e.key === '+' || e.key === '=') zoomAt(cx, cy, 1.3);
     else if (e.key === '-') zoomAt(cx, cy, 1 / 1.3);
-    else if (e.key.toLowerCase() === 'r') { seed = 7; place(); homeView(); }
+    else if (e.key.toLowerCase() === 'r') homeView();
     else return;
     e.preventDefault();
   });
 
-  /* cursor balloon — "Open" appears beside the pointer over an image */
+  /* cursor balloon — "Open" beside the pointer over a work */
   const cur = wrap.querySelector('.field-cursor');
   function moveCursor(e) { if (cur) cur.style.transform = `translate(${e.clientX + 15}px, ${e.clientY + 10}px)`; }
   if (cur) {

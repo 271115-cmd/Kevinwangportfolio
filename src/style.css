@@ -125,11 +125,9 @@ body.dd-open #dd-scrim { pointer-events: auto; }
    ============================================================ */
 #field-wrap { position: fixed; inset: 0; overflow: hidden; background: var(--paper); cursor: grab; touch-action: none; z-index: 1; user-select: none; -webkit-user-select: none; }
 #field-wrap.grabbing { cursor: grabbing; }
-#field { position: absolute; top: 0; left: 0; transform-origin: 0 0; will-change: transform;
-  background-image: linear-gradient(rgba(25,22,15,.045) 1px, transparent 1px),
-                    linear-gradient(90deg, rgba(25,22,15,.045) 1px, transparent 1px);
-  background-size: 100px 100px; }
-.field-img { position: absolute; display: block; }
+#field { position: absolute; top: 0; left: 0; transform-origin: 0 0; will-change: transform; }
+.field-img { position: absolute; display: block; animation: field-fade .5s ease both; }
+@keyframes field-fade { from { opacity: 0; } to { opacity: 1; } }
 .field-img img { display: block; width: 100%; height: auto; background: var(--paper-2); }
 .field-img .fi-cap { position: absolute; left: 0; top: 100%; margin-top: 3px; white-space: nowrap; opacity: 0; transition: opacity .15s; pointer-events: none; }
 .field-img:hover .fi-cap,
