@@ -74,7 +74,7 @@ function footerHTML() {
     `<div class="foot-meta">` +
       `<span>${esc(SITE.name)} · ${esc(SITE.role)}</span>` +
       `<span class="foot-social">${social}</span>` +
-      `<span>© ${esc(year)} · Built with Vite</span>` +
+      `<span>© ${esc(year)}</span>` +
     `</div>`
   );
 }

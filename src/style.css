@@ -14,7 +14,8 @@
   --line:  rgba(25, 22, 15, 0.20);
   --font:      'Geist Variable', system-ui, -apple-system, 'PingFang SC', 'Noto Sans CJK SC', sans-serif;
   --font-mono: 'Geist Mono Variable', ui-monospace, 'SFMono-Regular', monospace;
-  --fs:    clamp(0.98rem, 1vw, 1.12rem);   /* the one size */
+  --fs:    clamp(0.98rem, 1vw, 1.12rem);   /* the body size */
+  --fs-title: clamp(1.6rem, 2.6vw, 2.35rem); /* one restrained display size for page/work titles */
   --pad:   clamp(1rem, 3vw, 2.4rem);
   --header-h: 56px;
   /* legacy aliases so any stray reference resolves quietly */
@@ -37,7 +38,7 @@ body {
   color: var(--ink);
   font-family: var(--font);
   font-size: var(--fs);
-  line-height: 1.32;
+  line-height: 1.42;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
@@ -74,7 +75,7 @@ h1, h2, h3, h4 { font-weight: normal; font-size: inherit; line-height: 1.2; }
    PAGE TRANSITION — a plain wipe, no label drama
    ============================================================ */
 #page-transition { position: fixed; inset: 0; z-index: 9990; pointer-events: none; overflow: hidden; }
-#page-transition .pt-panel { position: absolute; inset: 0; background: var(--paper); transform: translateY(0); will-change: transform; }
+#page-transition .pt-panel { position: absolute; inset: 0; background: var(--paper); opacity: 1; will-change: opacity; }
 #page-transition .pt-label { display: none; }
 
 /* ============================================================
@@ -160,7 +161,7 @@ body.dd-open #dd-scrim { pointer-events: auto; }
 /* ============================================================
    DISCIPLINE PAGES — plain text indexes
    ============================================================ */
-.section-head { padding: clamp(2rem,6vw,4rem) 0 1.2rem; }
+.section-head { padding: clamp(3rem,8vw,6rem) 0 1.4rem; }
 .section-head .sh-index { display: none; }
 .section-head .sh-title { }
 .section-head .sh-title br { display: none; }
@@ -398,6 +399,15 @@ body.axis-active .axis-controls { opacity: 1; visibility: visible; }
 /* ============================================================
    REVEAL — barely anything (restraint)
    ============================================================ */
+/* quiet display hierarchy — one restrained larger size for page/work titles,
+   normal weight, tight leading (considered, not louder) */
+.section-head .sh-title, .detail-title, .post-title {
+  display: block; font-size: var(--fs-title); line-height: 1.1; letter-spacing: -0.01em;
+}
+.section-head .sh-title { margin-bottom: .45rem; }
+.detail-title { margin: .25rem 0 0; }
+.post-title { margin: .25rem 0 0; }
+
 .reveal { opacity: 0; transition: opacity .6s ease; }
 .reveal.is-in { opacity: 1; }
 .reveal-plate.is-in, .reveal-plate { opacity: 1; }

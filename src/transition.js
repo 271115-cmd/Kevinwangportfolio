@@ -39,9 +39,9 @@ export function initTransition() {
     if (revealed || ov.dataset.leaving) return;
     revealed = true;
     if (label) label.textContent = currentLabel();
-    gsap.set(panel, { yPercent: 0 });
+    gsap.set(panel, { opacity: 1 });
     gsap.to(panel, {
-      yPercent: -100, duration: 1.0, ease: 'power3.inOut', delay: 0.06,
+      opacity: 0, duration: 0.9, ease: 'power2.out', delay: 0.06,
       onComplete: () => { ov.style.display = 'none'; },
     });
   };
@@ -50,7 +50,7 @@ export function initTransition() {
   setTimeout(reveal, 2400);                                   // safety
   setTimeout(() => { if (!ov.dataset.leaving) ov.style.display = 'none'; }, 4200);
 
-  /* ---- LEAVE on internal link click (panel rises to cover) ---- */
+  /* ---- LEAVE on internal link click (panel fades up to cover) ---- */
   let leaving = false;
   const go = (href) => { if (leaving !== 'done') { leaving = 'done'; window.location.href = href; } };
 
@@ -75,8 +75,8 @@ export function initTransition() {
 
     gsap.killTweensOf(panel);
     gsap.fromTo(panel,
-      { yPercent: 100 },
-      { yPercent: 0, duration: 0.7, ease: 'power3.inOut', onComplete: () => go(a.href) });
-    setTimeout(() => go(a.href), 1300);                       // fallback
+      { opacity: 0 },
+      { opacity: 1, duration: 0.55, ease: 'power2.inOut', onComplete: () => go(a.href) });
+    setTimeout(() => go(a.href), 1100);                       // fallback
   });
 }
