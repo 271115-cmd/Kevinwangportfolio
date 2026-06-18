@@ -1,8 +1,8 @@
 /* ============================================================
    field.js — the home "field": the spatial/built work scattered
-   across a plane you walk around. Drag pans with momentum; wheel/
-   buttons zoom toward the cursor; Shuffle re-scatters. After
-   loicsutter.ch. Plain DOM + a single rAF transform loop.
+   across a plane you walk around. Drag/wheel pan with momentum;
+   buttons (and pinch) zoom; Re-lay re-scatters; "Walk around" runs a
+   guided tour that frames each work in turn. Plain DOM + one rAF loop.
    Curated to architecture + models (the calm, built work) — the
    loud graphic/object/web pieces live one click away in the Index.
    ============================================================ */
@@ -33,9 +33,15 @@ export function initField() {
   if (!items.length) return;
 
   const WORLD = { w: 2000, h: 1400 };
-  const MIN = 0.5, MAX = 3;
+  const MIN = 0.5, MAX = 3.5;
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
   let seed = 7;
   const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+  // a tour stop's layout box (world units); fall back to a landscape guess until the image loads
+  const stopCenter = (el) => {
+    const w = el.offsetWidth, h = el.offsetHeight || w * 0.7;
+    return { w, h, cx: el.offsetLeft + w / 2, cy: el.offsetTop + h / 2 };
+  };
 
   const idxBtn = wrap.querySelector('.field-index');
   if (idxBtn) idxBtn.addEventListener('click', () => document.getElementById('menu-toggle')?.click());
@@ -68,7 +74,10 @@ export function initField() {
   /* view: current eased toward a target; drag adds momentum */
   let tx = 0, ty = 0, sc = 1, txT = 0, tyT = 0, scT = 1, vx = 0, vy = 0;
   let down = false, lastX = 0, lastY = 0, moved = 0;
-  let walk = false, wvx = 0.62, wvy = 0.41;   // "Walk around" auto-pan velocity (px/frame)
+  // "Walk around" — a guided tour that steps between the works, one at a time
+  let walk = false, stopsEls = [], tourIdx = 0, resting = -1;
+  const DWELL = 95;                     // frames to rest on each work before moving on (~1.6s)
+  const FRAME_W = 0.6, FRAME_H = 0.72;  // fraction of the viewport a framed work fills
 
   function homeView() {
     const fit = Math.min(wrap.clientWidth / WORLD.w, wrap.clientHeight / WORLD.h) * 2.1;
@@ -82,24 +91,38 @@ export function initField() {
     const r = ns / scT;
     txT = cx - (cx - txT) * r; tyT = cy - (cy - tyT) * r; scT = ns;
   }
-  // soft bounds — the work can never be flung entirely off-screen.
-  // While walking, reflect the heading off whichever edge it reaches.
+  // soft bounds — the work can never be flung entirely off-screen
   function clampTarget() {
     const W = WORLD.w * scT, H = WORLD.h * scT;
     const vw = wrap.clientWidth, vh = wrap.clientHeight;
-    const minX = vw * 0.3 - W, maxX = vw * 0.7;
-    const minY = vh * 0.3 - H, maxY = vh * 0.7;
-    if (txT < minX) { txT = minX; if (walk && wvx < 0) wvx = -wvx; }
-    else if (txT > maxX) { txT = maxX; if (walk && wvx > 0) wvx = -wvx; }
-    if (tyT < minY) { tyT = minY; if (walk && wvy < 0) wvy = -wvy; }
-    else if (tyT > maxY) { tyT = maxY; if (walk && wvy > 0) wvy = -wvy; }
+    txT = Math.max(vw * 0.3 - W, Math.min(vw * 0.7, txT));
+    tyT = Math.max(vh * 0.3 - H, Math.min(vh * 0.7, tyT));
+  }
+
+  // frame the current tour stop — read live size so it self-corrects as the image loads
+  function tourTarget() {
+    const el = stopsEls[tourIdx];
+    if (!el) return;
+    const vw = wrap.clientWidth, vh = wrap.clientHeight;
+    const { w, h, cx, cy } = stopCenter(el);
+    scT = Math.max(MIN, Math.min(MAX, Math.min(vw * FRAME_W / w, vh * FRAME_H / h)));
+    txT = vw / 2 - cx * scT; tyT = vh / 2 - cy * scT;
   }
 
   function tick() {
-    if (walk && !down) { txT += wvx; tyT += wvy; }
-    else if (!down && (Math.abs(vx) > 0.04 || Math.abs(vy) > 0.04)) { txT += vx; tyT += vy; vx *= 0.93; vy *= 0.93; }
+    const touring = walk && !down && stopsEls.length;
+    if (touring && resting < 0) tourTarget();          // reframe only while traveling; freeze once we arrive
+    else if (!walk && !down && (Math.abs(vx) > 0.04 || Math.abs(vy) > 0.04)) { txT += vx; tyT += vy; vx *= 0.93; vy *= 0.93; }
     clampTarget();
-    const e = 0.16;
+    if (touring) {
+      const arrived = Math.abs(tx - txT) < 2 && Math.abs(ty - tyT) < 2 && Math.abs(sc - scT) < 0.01;
+      if (arrived) {
+        if (resting < 0) resting = DWELL;                                   // just arrived — begin the pause
+        else if (resting > 0) resting -= 1;
+        else { tourIdx = (tourIdx + 1) % stopsEls.length; resting = -1; }    // pause done — on to the next work
+      } else resting = -1;
+    }
+    const e = (touring && reduced.matches) ? 1 : 0.16;   // reduced motion → cut between works instead of gliding
     tx += (txT - tx) * e; ty += (tyT - ty) * e; sc += (scT - sc) * e;
     field.style.transform = `translate(${tx.toFixed(2)}px, ${ty.toFixed(2)}px) scale(${sc.toFixed(4)})`;
     requestAnimationFrame(tick);
@@ -109,11 +132,23 @@ export function initField() {
   tx = txT; ty = tyT; sc = scT;           // first frame lands settled, then eases live
   requestAnimationFrame(tick);
 
-  /* "Walk around" — auto-pan a slow tour across the field */
   const walkBtn = wrap.querySelector('.field-walk');
   const walkLabel = walkBtn?.querySelector('.fw-label');
   function setWalk(on) {
-    walk = on; vx = vy = 0;
+    walk = on; vx = vy = 0; resting = -1;
+    if (on) {
+      stopsEls = Array.from(field.querySelectorAll('.field-img'));   // tour in reading order
+      // begin at the work nearest what you're already looking at, then sweep through the rest
+      const wx = (wrap.clientWidth / 2 - tx) / sc, wy = (wrap.clientHeight / 2 - ty) / sc;
+      let best = 0, bestD = Infinity;
+      stopsEls.forEach((el, i) => {
+        const { cx, cy } = stopCenter(el);
+        const dx = cx - wx, dy = cy - wy;
+        const d = dx * dx + dy * dy;
+        if (d < bestD) { bestD = d; best = i; }
+      });
+      tourIdx = best;
+    }
     if (walkBtn) walkBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
     if (walkLabel) walkLabel.textContent = on ? 'Stop walking' : 'Walk around';
   }
@@ -162,7 +197,7 @@ export function initField() {
   wrap.tabIndex = 0;
   wrap.addEventListener('keydown', (e) => {
     const cx = wrap.clientWidth / 2, cy = wrap.clientHeight / 2, STEP = 120;
-    if (['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','+','=','-'].includes(e.key)) stopWalk();
+    if (['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','+','=','-','r','R'].includes(e.key)) stopWalk();
     if (e.key === 'ArrowLeft') { txT += STEP; vx = 0; }
     else if (e.key === 'ArrowRight') { txT -= STEP; vx = 0; }
     else if (e.key === 'ArrowUp') { tyT += STEP; vy = 0; }
