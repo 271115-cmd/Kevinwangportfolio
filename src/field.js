@@ -83,20 +83,30 @@ export function initField() {
   const bumpProj = (h, d) => projCount.set(h, Math.max(0, (projCount.get(h) || 0) + d));
   const bumpImg = (i, d) => imgCount.set(i, Math.max(0, (imgCount.get(i) || 0) + d));
 
-  function makeTile(cx, cy) {
-    const base = imgBase(cx, cy);
-    let img = -1;
-    // prefer a project not already on screen → no work repeats in view; fall back to a distinct image
-    for (let t = 0; t < M; t++) { const c = (base + t) % M; if (!(projCount.get(items[c].href) > 0)) { img = c; break; } }
-    if (img < 0) for (let t = 0; t < M; t++) { const c = (base + t) % M; if (!(imgCount.get(c) > 0)) { img = c; break; } }
-    if (img < 0) img = base;              // saturated (more tiles than works) — allow a repeat
-    const it = items[img];
-    const d = IMAGE_DIMS[it.src];
-    const aspect = d ? d[0] / d[1] : 1.4;
-    const w = Math.round(CELL * (0.46 + h(cx, cy, 2) * 0.26));
+  const aspectOf = (it) => { const d = IMAGE_DIMS[it.src]; return d ? d[0] / d[1] : 1.4; };
+  // deterministic tile box for a cell + aspect — width capped so height stays within the cell band
+  function geom(cx, cy, aspect) {
+    let w = Math.round(CELL * (0.46 + h(cx, cy, 2) * 0.26));
+    w = Math.min(w, Math.floor(CELL * aspect * 0.92));
     const ih = w / aspect;
     const x = Math.round(cx * CELL + h(cx, cy, 3) * Math.max(0, CELL - w));
     const y = Math.round(cy * CELL + h(cx, cy, 4) * Math.max(0, CELL - ih));
+    return { w, ih, cx: x + w / 2, cy: y + ih / 2, x, y };
+  }
+  function chooseImg(cx, cy) {
+    const base = imgBase(cx, cy);
+    // prefer a project not already on screen → no work repeats in view; then a distinct image;
+    for (let t = 0; t < M; t++) { const c = (base + t) % M; if (!(projCount.get(items[c].href) > 0)) return c; }
+    for (let t = 0; t < M; t++) { const c = (base + t) % M; if (!(imgCount.get(c) > 0)) return c; }
+    let img = base, lo = Infinity;        // saturated (more tiles than works) — spread the repeat onto the least-used image
+    for (let c = 0; c < M; c++) { const u = imgCount.get(c) || 0; if (u < lo) { lo = u; img = c; } }
+    return img;
+  }
+  function makeTile(cx, cy) {
+    const img = chooseImg(cx, cy);
+    const it = items[img];
+    const d = IMAGE_DIMS[it.src];
+    const { w, ih, x, y } = geom(cx, cy, aspectOf(it));
     const el = document.createElement('a');
     el.className = 'field-img';
     el.href = it.href;
@@ -130,48 +140,49 @@ export function initField() {
     mounted.clear(); projCount.clear(); imgCount.clear(); rangeKey = '';
   }
 
-  /* ---- "Walk around" — wander the plane, framing one work per leg ---- */
-  let walk = false, toured = 0, heading = 0, tourEl = null;
+  /* ---- "Walk around" — wander the plane, framing one work per leg.
+     Targets are picked from the DETERMINISTIC virtual grid (a cell always
+     exists ahead), never from the tiny mounted set — so it can't stall. ---- */
+  let walk = false, toured = 0, heading = 0, tourCell = null;
   let phase = 'travel', tweenFrom = null, tweenTo = null, tweenStart = 0, tweenDur = 0, dwellUntil = 0;
-  const stopCenter = (el) => { const w = el.offsetWidth, ht = el.offsetHeight || w * 0.7; return { w, h: ht, cx: el.offsetLeft + w / 2, cy: el.offsetTop + ht / 2 }; };
   const worldCenter = () => ({ x: (wrap.clientWidth / 2 - tx) / sc, y: (wrap.clientHeight / 2 - ty) / sc });
+  const cellAt = (wx, wy) => ({ cx: Math.floor(wx / CELL), cy: Math.floor(wy / CELL) });
 
-  function stopView(el) {
-    if (!el) return null;
+  // the view that frames cell (cx,cy)'s tile — uses the live mounted box if present, else the deterministic box
+  function viewForCell(cx, cy) {
     const vw = wrap.clientWidth, vh = wrap.clientHeight;
-    const { w, h: ht, cx, cy } = stopCenter(el);
+    const m = mounted.get(cx + ',' + cy);
+    let w, ht, ccx, ccy;
+    if (m) { const el = m.el; w = el.offsetWidth; ht = el.offsetHeight || w * 0.7; ccx = el.offsetLeft + w / 2; ccy = el.offsetTop + ht / 2; }
+    else { const g = geom(cx, cy, aspectOf(items[imgBase(cx, cy)])); w = g.w; ht = g.ih; ccx = g.cx; ccy = g.cy; }
     const s = Math.max(MIN, Math.min(MAX, Math.min(vw * FRAME_W / w, vh * FRAME_H / ht)));
-    return { x: vw / 2 - cx * s, y: vh / 2 - cy * s, s };     // no clamp — the plane is infinite
+    return { x: vw / 2 - ccx * s, y: vh / 2 - ccy * s, s };   // no clamp — the plane is infinite
   }
-  // nearest mounted tile to a world point (optionally excluding the current one)
-  function nearestTile(px, py, exclude) {
-    let best = null, bestD = Infinity;
-    for (const t of mounted.values()) {
-      if (t.el === exclude) continue;
-      const w = t.el.offsetWidth, ht = t.el.offsetHeight || w * 0.7;
-      const dx = t.el.offsetLeft + w / 2 - px, dy = t.el.offsetTop + ht / 2 - py;
-      const d = dx * dx + dy * dy;
-      if (d < bestD) { bestD = d; best = t.el; }
-    }
-    return best;
-  }
-  function pickNext() {
+  // the next cell to walk to: ahead in `heading`, always a fresh, distinct grid cell
+  function nextCell() {
     const c = worldCenter();
-    return nearestTile(c.x + Math.cos(heading) * CELL * 1.4, c.y + Math.sin(heading) * CELL * 1.4, tourEl);
+    for (let reach = CELL * 1.7; reach < CELL * 5; reach += CELL) {
+      const n = cellAt(c.x + Math.cos(heading) * reach, c.y + Math.sin(heading) * reach);
+      if (!tourCell || n.cx !== tourCell.cx || n.cy !== tourCell.cy) return n;
+    }
+    return cellAt(c.x + CELL * 2, c.y);
   }
   function startLeg() {
     tweenFrom = { x: tx, y: ty, s: sc };
-    tweenTo = stopView(tourEl) || tweenFrom;
+    tweenTo = viewForCell(tourCell.cx, tourCell.cy);
     const d = Math.hypot(tweenTo.x - tx, tweenTo.y - ty);
     tweenDur = reduced.matches ? 0 : Math.max(MIN_DUR, Math.min(MAX_DUR, d / PAN_SPEED));
     tweenStart = performance.now();
     phase = 'travel';
   }
-  function markCurrent() { mounted.forEach((t) => t.el.classList.toggle('is-current', t.el === tourEl)); }
+  function markCurrent() {
+    const cur = tourCell && mounted.get(tourCell.cx + ',' + tourCell.cy);
+    mounted.forEach((t) => t.el.classList.toggle('is-current', t === cur));
+  }
   function clearCurrent() { mounted.forEach((t) => t.el.classList.remove('is-current')); }
 
   function tick(now) {
-    if (walk && !down && tourEl && tweenTo) {
+    if (walk && !down && tourCell && tweenTo) {
       if (phase === 'travel') {
         const p = tweenDur > 0 ? Math.min(1, (now - tweenStart) / tweenDur) : 1;
         const e = p * p * (3 - 2 * p);                  // smoothstep — eases in and out
@@ -184,7 +195,7 @@ export function initField() {
         if (now >= dwellUntil) {
           toured += 1;
           if (reduced.matches && toured >= 6) setWalk(false);   // finite under reduced motion (WCAG 2.3.3/2.2.2)
-          else { heading += (h(toured, 7, 9) - 0.5) * 1.1; tourEl = pickNext() || tourEl; startLeg(); }
+          else { heading += (h(toured, 7, 9) - 0.5) * 1.1; tourCell = nextCell(); startLeg(); }
         }
       }
       txT = tx; tyT = ty; scT = sc;                     // keep targets synced for a seamless manual handoff
@@ -210,9 +221,9 @@ export function initField() {
     if (on) {
       const c = worldCenter();
       heading = h(Math.round(c.x), Math.round(c.y), 5) * Math.PI * 2;   // a fresh wander direction
-      tourEl = nearestTile(c.x, c.y, null);             // open on the work nearest the centre
-      if (tourEl) startLeg(); else walk = false;
-    } else { tweenTo = null; tourEl = null; clearCurrent(); }
+      tourCell = cellAt(c.x, c.y);                       // open on the work nearest the centre
+      startLeg();
+    } else { tweenTo = null; tourCell = null; clearCurrent(); }
     if (walkBtn) walkBtn.setAttribute('aria-pressed', walk ? 'true' : 'false');
     if (walkLabel) walkLabel.textContent = walk ? 'Stop walking' : 'Walk around';
   }
