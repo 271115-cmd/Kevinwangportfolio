@@ -13,18 +13,18 @@ function makeCityTexture() {
   const c = document.createElement('canvas');
   c.width = c.height = 1024;
   const x = c.getContext('2d');
-  x.fillStyle = '#ece8de'; x.fillRect(0, 0, 1024, 1024);
-  // scatter city blocks
+  x.fillStyle = '#f4f2ed'; x.fillRect(0, 0, 1024, 1024);
+  // scatter city blocks (neutral greys — the quiet palette, no accent colour)
   for (let i = 0; i < 1400; i++) {
     const bx = Math.random() * 1024, by = Math.random() * 1024;
     const bw = 6 + Math.random() * 26, bh = 6 + Math.random() * 26;
-    const g = 150 + Math.floor(Math.random() * 70);
-    x.fillStyle = `rgb(${g},${g - 4},${g - 12})`;
+    const g = 196 + Math.floor(Math.random() * 44);
+    x.fillStyle = `rgb(${g},${g - 3},${g - 8})`;
     x.fillRect(bx, by, bw, bh);
   }
-  // the central axis corridor (vertical) kept clear + marked
-  x.fillStyle = '#ece8de'; x.fillRect(486, 0, 52, 1024);
-  x.strokeStyle = 'rgba(255,59,0,0.9)'; x.lineWidth = 4;
+  // the central axis corridor (vertical) kept clear + marked in patina
+  x.fillStyle = '#f4f2ed'; x.fillRect(486, 0, 52, 1024);
+  x.strokeStyle = 'rgba(110,106,96,0.85)'; x.lineWidth = 4;
   x.beginPath(); x.moveTo(512, 0); x.lineTo(512, 1024); x.stroke();
   const tex = new THREE.CanvasTexture(c);
   tex.anisotropy = 4;

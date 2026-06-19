@@ -13,14 +13,17 @@ import { initDropdown } from './dropdown.js';
 export const SITE = {
   name: 'Kevin Wang',            // proper case for SEO/schema; shown uppercase via CSS
   role: 'Architecture',
-  tagline: 'Architecture student. Models, graphic & web design.',
-  description: 'Kevin Wang is a designer building a portfolio toward undergraduate architecture — work across architecture, models, graphic design, web, and objects.',
+  tagline: 'Architecture student · Hong Kong',
+  description: 'Kevin Wang — a Grade 12 student at Hong Kong International School (HKIS) building an architecture portfolio toward undergraduate study, exploring how culture, cities, and human experience meet in the built environment.',
   email: 'kevinwang6699@outlook.com',
   edition: "Portfolio ’26",
-  // Add real profiles when ready, e.g. { label: 'Instagram', href: 'https://…' }.
-  // These also feed schema.org `sameAs` (helps Google link the search entity to you).
-  // Left empty so the site never ships dead "#" links.
-  socials: [],
+  // Real profiles → footer links + schema.org `sameAs` (helps Google link the search
+  // entity to you — the key lever for a common name). Never ship a dead "#" link.
+  socials: [
+    { label: 'Instagram', href: 'https://www.instagram.com/kevinwang673' },
+    // LinkedIn: paste your full profile URL (the linkedin.com/in/… from your address bar)
+    // and I'll add it — e.g. { label: 'LinkedIn', href: 'https://www.linkedin.com/in/…' },
+  ],
 };
 
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) =>

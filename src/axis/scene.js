@@ -10,6 +10,7 @@ import { AXIS_LEN, COLORS, CAM, zFor } from './config.js';
 import { focalZ, camPose } from './camera.js';
 import { createSegments } from './segments.js';
 import { createGround } from './ground.js';
+import { makeMaterials } from './kit.js';
 
 export function createScene(canvas) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -19,17 +20,17 @@ export function createScene(canvas) {
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(46, 1, 0.1, 2000);
 
-  scene.add(new THREE.HemisphereLight(0xffffff, 0xb8b2a4, 0.7));
-  const sun = new THREE.DirectionalLight(0xffffff, 0.85);
-  sun.position.set(40, 80, 30);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0xb8b2a4, 0.72));
+  const sun = new THREE.DirectionalLight(0xffffff, 0.9);
+  sun.position.set(60, 110, 50);
   scene.add(sun);
+  const fill = new THREE.DirectionalLight(0xffffff, 0.22);  // soft counter-fill reads the eaves
+  fill.position.set(-50, 30, -40);
+  scene.add(fill);
 
-  // shared materials — exactly three, reused across every monument (point 10)
-  const M = {
-    face: new THREE.MeshStandardMaterial({ color: COLORS.paper2, roughness: 0.85, metalness: 0 }),
-    faceActive: new THREE.MeshStandardMaterial({ color: COLORS.accent, roughness: 0.6, metalness: 0 }),
-    edge: new THREE.LineBasicMaterial({ color: COLORS.ink }),
-  };
+  // shared material set — toned white-model "focus" roles + a flat "ghost"
+  // for neighbours + one ink edge, reused across every monument (point 10)
+  const M = makeMaterials();
 
   // the axis line itself
   const line = new THREE.Mesh(

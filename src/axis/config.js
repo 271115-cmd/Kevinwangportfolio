@@ -8,6 +8,10 @@ export const AXIS_LEN = 240;                 // world length, south → north
 export const Z_SOUTH = 14;                   // world z at pos 0 (south)
 export const zFor = (pos) => Z_SOUTH - pos * AXIS_LEN;   // pos 0..1 → world z
 
+// monuments are built at true-ish metre scale, then shrunk into the atlas
+export const MODEL_SCALE = 0.42;             // ~1 world unit ≈ 2.4 m of building
+export const FLANK_MARGIN = 7;               // gap from the axis line for east/west sites
+
 // lateral offset for flanking (east/west) sites; center sites sit on x=0
 export const xForSide = (side, scale = 3) =>
   side === 'east' ? 9 + scale : side === 'west' ? -(9 + scale) : 0;

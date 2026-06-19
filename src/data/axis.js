@@ -35,14 +35,14 @@ export const MONUMENTS = [
 
   { id: 'xiannongtan', archetype: 'altar',
     identity: { en: 'Altar of Agriculture', zh: '先农坛' },
-    spatial: { pos: 0.12, side: 'west', scale: 2.6 },
+    spatial: { pos: 0.083, side: 'west', scale: 2.6 },
     historical: { year: 1420, era: 'Ming' },
     interpretive: { pairing: null, role: 'Where the emperor ploughed a ceremonial furrow each spring — the western half of the axis’s southern ritual pair.' },
     rendering: { intensity: 0.6, variant: 2 } },
 
   { id: 'tiantan', archetype: 'temple',
     identity: { en: 'Temple of Heaven', zh: '天坛' },
-    spatial: { pos: 0.14, side: 'east', scale: 4.0 },
+    spatial: { pos: 0.083, side: 'east', scale: 4.0 },
     historical: { year: 1420, era: 'Ming' },
     interpretive: { pairing: null, role: 'The great altar to Heaven — the eastern counterweight that balances the Altar of Agriculture across the line.' },
     rendering: { intensity: 0.9, variant: 1 } },

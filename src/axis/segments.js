@@ -8,6 +8,7 @@
 
 import { MONUMENTS } from '../data/axis.js';
 import { buildMonument, disposeMonument } from './archetypes.js';
+import { setFocus } from './kit.js';
 
 export function createSegments(scene, M, { windowRadius = 2, cacheLimit = 7 } = {}) {
   const built = new Map();    // index → group (cached; may be detached from scene)
@@ -46,10 +47,10 @@ export function createSegments(scene, M, { windowRadius = 2, cacheLimit = 7 } = 
   function setActive(i) {
     if (i === activeIdx) return;
     const prev = built.get(activeIdx);
-    if (prev) prev.userData.meshes.forEach((me) => { me.material = M.face; });
+    if (prev) setFocus(prev, false, M);     // neighbours → quiet flat ghost
     activeIdx = i;
     const cur = built.get(i);
-    if (cur) cur.userData.meshes.forEach((me) => { me.material = M.faceActive; });
+    if (cur) setFocus(cur, true, M);         // focused monument → toned + ink edges
   }
 
   return {
