@@ -351,7 +351,7 @@ body.dd-open #dd-scrim { pointer-events: auto; }
 .axis-lead { margin-top: 1rem; max-width: 54ch; line-height: 1.4; }
 .axis-lead .accent { font-style: italic; }
 .ax-cue { margin-top: 1.6rem; color: var(--ink); }
-.axis-journey { height: 820vh; }
+.axis-journey { height: 1200vh; }
 .axis-narration, .axis-rail { position: fixed; z-index: 6; opacity: 0; visibility: hidden; transition: opacity .4s; }
 body.axis-active .axis-narration, body.axis-active .axis-rail { opacity: 1; visibility: visible; }
 .axis-narration { left: var(--pad); bottom: 9vh; width: min(420px,44vw); background: var(--paper); border: 1px solid var(--line); padding: 1rem 1.1rem; }

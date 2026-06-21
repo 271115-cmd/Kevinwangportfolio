@@ -4,7 +4,7 @@
    camera, segments, and archetypes all agree.
    ============================================================ */
 
-export const AXIS_LEN = 240;                 // world length, south → north
+export const AXIS_LEN = 360;                 // world length, south → north (roomy spacing)
 export const Z_SOUTH = 14;                   // world z at pos 0 (south)
 export const zFor = (pos) => Z_SOUTH - pos * AXIS_LEN;   // pos 0..1 → world z
 
