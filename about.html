@@ -83,6 +83,32 @@
           </ul>
         </div>
       </div>
+
+      <div class="contact reveal" aria-labelledby="contact-h">
+        <h2 class="contact-h" id="contact-h">Get in touch</h2>
+        <p class="contact-sub">For collaboration, studio enquiries, or a question about the work — leave a note and I’ll reply by email. Or write directly to <a href="mailto:kevinwang6699@outlook.com" data-no-transition>kevinwang6699@outlook.com</a>.</p>
+        <form id="contact-form" class="contact-form" novalidate>
+          <div class="cf-row">
+            <label class="cf-field">
+              <span class="cf-label mono">Name</span>
+              <input class="cf-input" type="text" name="name" autocomplete="name" maxlength="120" required />
+            </label>
+            <label class="cf-field">
+              <span class="cf-label mono">Email</span>
+              <input class="cf-input" type="email" name="email" autocomplete="email" maxlength="160" required />
+            </label>
+          </div>
+          <label class="cf-field">
+            <span class="cf-label mono">Message</span>
+            <textarea class="cf-input cf-textarea" name="message" rows="5" maxlength="3000" required></textarea>
+          </label>
+          <input class="cf-hp" type="text" name="company" tabindex="-1" autocomplete="off" aria-hidden="true" />
+          <div class="cf-foot">
+            <button class="cf-submit" type="submit">Send message →</button>
+            <p class="cf-status" role="status" aria-live="polite" hidden></p>
+          </div>
+        </form>
+      </div>
     </section>
   </main>
 

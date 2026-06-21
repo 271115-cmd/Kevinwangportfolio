@@ -248,6 +248,28 @@ body.dd-open #dd-scrim { pointer-events: auto; }
 .about-col li { display: flex; justify-content: space-between; gap: 1rem; padding: .12rem 0; max-width: 40rem; }
 .about-col li .yr { color: var(--ink); }
 
+/* — Contact form (About) — */
+.contact { max-width: 46rem; margin-top: clamp(2.5rem,6vw,4.5rem); padding-top: clamp(1.6rem,4vw,2.4rem); border-top: 1px solid var(--line); }
+.contact-h { color: var(--ink); margin-bottom: .5rem; }
+.contact-sub { max-width: 52ch; margin-bottom: clamp(1.4rem,3vw,2rem); line-height: 1.45; }
+.contact-sub a { text-decoration: underline; text-underline-offset: 0.18em; }
+.contact-form { display: flex; flex-direction: column; gap: 1.3rem; }
+.cf-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.3rem; }
+@media (max-width: 600px) { .cf-row { grid-template-columns: 1fr; } }
+.cf-field { display: flex; flex-direction: column; gap: .35rem; }
+.cf-label { font-size: .68rem; letter-spacing: .1em; text-transform: uppercase; color: var(--ink); opacity: .55; }
+.cf-input { width: 100%; font: inherit; color: var(--ink); background: transparent; border: none; border-bottom: 1px solid var(--line); padding: .45rem 0; border-radius: 0; -webkit-appearance: none; }
+.cf-input:focus { outline: none; border-bottom-color: var(--ink); }
+.cf-textarea { resize: vertical; min-height: 4.5rem; line-height: 1.5; }
+.cf-hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.cf-foot { display: flex; align-items: center; gap: 1.2rem; flex-wrap: wrap; margin-top: .3rem; }
+.cf-submit { align-self: flex-start; cursor: pointer; font: inherit; color: var(--ink); background: none; border: none; border-bottom: 1px solid var(--ink); padding: 0 0 .15rem; }
+.cf-submit:hover:not(:disabled) { opacity: .65; }
+.cf-submit:disabled { opacity: .4; cursor: default; }
+.cf-status { font-size: .85rem; color: var(--ink); }
+.cf-status .mono { opacity: .85; }
+.cf-status.is-error .mono { opacity: 1; }
+
 .jr-list { border-top: 1px solid var(--line); max-width: 52rem; }
 .jr-row { display: grid; grid-template-columns: 6rem 1fr auto; gap: .9rem; align-items: baseline; padding: .5rem 0; border-bottom: 1px solid var(--line); }
 .jr-date, .jr-tags { color: var(--ink); }

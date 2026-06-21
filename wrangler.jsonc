@@ -11,4 +11,10 @@
     "binding": "ASSETS"
   },
   "observability": { "enabled": true }
+
+  // Contact form (POST /api/contact):
+  //  • Set RESEND_API_KEY as a Secret (Settings → Variables and Secrets) to email submissions.
+  //  • Optional: CONTACT_TO / CONTACT_FROM override the recipient / sender address.
+  //  • To also keep a saved copy, create a KV namespace and add a sibling key here:
+  //      "kv_namespaces": [{ "binding": "CONTACTS", "id": "<your-namespace-id>" }]
 }

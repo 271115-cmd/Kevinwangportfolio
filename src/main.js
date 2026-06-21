@@ -23,6 +23,11 @@ if (document.getElementById('read-app')) {
   import('./read.js').then((m) => m.initRead());
 }
 
+// Contact form — only on about.html
+if (document.getElementById('contact-form')) {
+  import('./contact.js').then((m) => m.initContact());
+}
+
 // Pattern Loom — only on loom.html
 if (document.getElementById('loom-app')) {
   import('./loom.js').then((m) => m.initLoom());
