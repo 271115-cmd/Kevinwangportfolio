@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <title>Pattern Loom — Kevin Wang</title>
-  <meta name="description" content="A generative tool for traditional Chinese lattice — ice-ray (冰裂), key-fret (回纹), and tortoiseshell (龟背). Tweak, shuffle, and export print-ready SVG/PNG. By Kevin Wang." />
+  <meta name="description" content="A generative window-screen studio. Weave a one-of-a-kind Chinese lattice — ice-ray (冰裂), key-fret (回纹), tortoiseshell (龟背), trellis (斜格) — dress it in a material mood, and export a seamless wallpaper, print, or tile. By Kevin Wang." />
   <meta name="theme-color" content="#FFFFFF" />
-  <meta property="og:title" content="Pattern Loom — generative Chinese lattice by Kevin Wang" />
-  <meta property="og:description" content="Generate ice-ray, key-fret, and tortoiseshell lattice. Tweak, shuffle, export." />
+  <meta property="og:title" content="Pattern Loom — generative Chinese lattice screens by Kevin Wang" />
+  <meta property="og:description" content="Weave a one-of-a-kind lattice screen. Choose a mood, export a seamless wallpaper, print, or tile." />
   <meta property="og:image" content="/og-image.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
@@ -28,63 +28,61 @@
         <span class="sh-index">▦</span>
         <h1 class="sh-title">Pattern<br />Loom</h1>
         <div class="sh-meta">
-          <span>Generative Chinese lattice · SVG/PNG</span>
-          <span class="accent">Runs entirely in your browser</span>
+          <span>Generative lattice screens</span>
+          <span class="accent">Weave one · make it yours</span>
         </div>
       </div>
 
-      <p class="read-thesis reveal">The lattice motifs of Chinese architecture — <em class="accent">冰裂</em> ice-ray,
-        <em class="accent">回纹</em> key-fret, <em class="accent">龟背</em> tortoiseshell — are really just rule
-        systems. This turns those rules into a knob you can turn: tweak, shuffle, and export a print-ready pattern.
-        Every ice-ray seed is one of a kind.</p>
+      <p class="read-thesis reveal">In Chinese architecture the window screen — <em class="accent">冰裂</em> ice-ray,
+        <em class="accent">回纹</em> key-fret, <em class="accent">龟背</em> tortoiseshell — turns a wall into woven light.
+        Loom treats those rules as a living thread: shuffle a one-of-a-kind screen, dress it in a material mood, and
+        carry it away as a wallpaper, a print, or a seamless tile.</p>
 
-      <div id="loom-app" class="loom-app reveal">
-        <div class="loom-controls">
-          <div class="loom-group">
-            <span class="loom-label mono">Pattern</span>
-            <div class="loom-btns">
-              <button class="loom-btn is-on" type="button" data-type="iceray">冰裂 Ice-ray</button>
-              <button class="loom-btn" type="button" data-type="keyfret">回纹 Key-fret</button>
-              <button class="loom-btn" type="button" data-type="tortoise">龟背 Tortoise</button>
-            </div>
-          </div>
-
-          <div class="loom-group">
-            <span class="loom-label mono">Palette</span>
-            <div class="loom-btns">
-              <button class="loom-btn is-on" type="button" data-pal="ink" aria-label="Ink on white"><span class="sw" style="background:#1A1A18"></span></button>
-              <button class="loom-btn" type="button" data-pal="accent" aria-label="Clay on white"><span class="sw" style="background:#6E6A60"></span></button>
-              <button class="loom-btn" type="button" data-pal="invert" aria-label="White on ink"><span class="sw" style="background:#1A1A18;outline:2px solid #FFFFFF;outline-offset:-4px"></span></button>
-              <button class="loom-btn" type="button" data-pal="accentink" aria-label="Clay on ink"><span class="sw" style="background:#1A1A18;box-shadow:inset 0 0 0 3px #6E6A60"></span></button>
-            </div>
-          </div>
-
-          <div class="loom-group">
-            <label class="loom-label mono" for="loom-density">Density</label>
-            <input id="loom-density" class="loom-range" type="range" min="0" max="100" value="55" />
-          </div>
-
-          <div class="loom-group">
-            <label class="loom-label mono" for="loom-weight">Line weight</label>
-            <input id="loom-weight" class="loom-range" type="range" min="1" max="14" value="4" />
-          </div>
-
-          <div class="loom-group loom-seed-row">
-            <span class="loom-label mono">Seed <span id="loom-seed">0007</span></span>
-            <button id="loom-shuffle" class="loom-btn loom-shuffle" type="button" data-magnetic>Shuffle ⟳</button>
-          </div>
-
-          <div class="loom-group loom-export">
-            <button id="loom-svg" class="loom-out" type="button">↓ SVG</button>
-            <button id="loom-png" class="loom-out" type="button">↓ PNG</button>
-          </div>
+      <div id="loom-app" class="loom2 reveal">
+        <div class="loom-stage">
+          <div id="loom-preview" class="loom-canvas" role="img" aria-label="Live pattern preview"></div>
         </div>
 
-        <div id="loom-preview" class="loom-preview" aria-label="Pattern preview"></div>
+        <div class="loom-rail">
+          <div class="loom-block">
+            <span class="loom-eyebrow mono">Motif</span>
+            <div class="loom-motifs">
+              <button class="loom-motif is-on" type="button" data-motif="iceray"><span class="lm-cn">冰裂</span><span class="lm-en">Ice-ray</span></button>
+              <button class="loom-motif" type="button" data-motif="keyfret"><span class="lm-cn">回纹</span><span class="lm-en">Key-fret</span></button>
+              <button class="loom-motif" type="button" data-motif="tortoise"><span class="lm-cn">龟背</span><span class="lm-en">Tortoise</span></button>
+              <button class="loom-motif" type="button" data-motif="trellis"><span class="lm-cn">斜格</span><span class="lm-en">Trellis</span></button>
+            </div>
+          </div>
+
+          <div class="loom-block">
+            <span class="loom-eyebrow mono">Mood</span>
+            <div class="loom-moods" id="loom-moods"></div>
+          </div>
+
+          <div class="loom-block">
+            <label class="loom-eyebrow mono" for="loom-scale">Scale</label>
+            <input id="loom-scale" class="loom-range" type="range" min="0" max="100" value="55" />
+          </div>
+
+          <div class="loom-block loom-weave">
+            <button id="loom-shuffle" class="loom-shuffle" type="button" data-magnetic>Weave a new one ⟳</button>
+            <span class="loom-seed mono">seed <b id="loom-seed">0007</b></span>
+          </div>
+
+          <div class="loom-block loom-take">
+            <span class="loom-eyebrow mono">Take it</span>
+            <div class="loom-take-row">
+              <select id="loom-preset" class="loom-select" aria-label="Export size"></select>
+              <button id="loom-png" class="loom-out" type="button">PNG</button>
+              <button id="loom-svg" class="loom-out" type="button">SVG</button>
+            </div>
+            <button id="loom-link" class="loom-link mono" type="button">⧉ Copy share link</button>
+          </div>
+        </div>
       </div>
 
-      <p class="read-foot mono reveal">Exports are vector (SVG) or 2400px raster (PNG) — print-ready. The ice-ray
-        generator makes a unique lattice for every seed; note the seed to reproduce one.</p>
+      <p class="read-foot mono reveal">Everything runs in your browser. Patterns tile seamlessly; exports are crisp
+        vector (SVG) or high-resolution raster (PNG), up to print sizes. Note the seed to weave the same screen again.</p>
     </section>
   </main>
 
