@@ -1,0 +1,14 @@
+{
+  // Cloudflare Worker config for `npx wrangler deploy`.
+  // Serves ./dist as static assets (matched first) and runs worker.js for
+  // the /api/read-building endpoint. Set GEMINI_API_KEY as a variable/secret
+  // in the Cloudflare project. `name` must match your Cloudflare project name.
+  "name": "kevinwangportfolio",
+  "main": "worker.js",
+  "compatibility_date": "2025-01-01",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS"
+  },
+  "observability": { "enabled": true }
+}
