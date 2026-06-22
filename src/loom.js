@@ -77,9 +77,9 @@ function centroid(poly) {
 }
 function genIceray(scale, seed) {
   const rnd = rng(seed);
-  const N = Math.max(6, Math.round(7 + scale * 0.62));         // ~7..69 shards
+  const N = Math.max(5, Math.round(5 + scale * 0.78));         // ~5..83 shards
   let pts = []; for (let i = 0; i < N; i++) pts.push([rnd() * S, rnd() * S]);
-  const cellFor = (i, set) => {
+  const cellFor = (i, set) => {                                // Lloyd helper (toroidal nearest-image)
     let region = [[-S, -S], [2 * S, -S], [2 * S, 2 * S], [-S, 2 * S]];
     const p = set[i];
     for (let j = 0; j < N && region.length >= 3; j++) if (j !== i) region = clipHalf(region, p, nearestImage(set[j], p));
@@ -90,12 +90,23 @@ function genIceray(scale, seed) {
     for (let i = 0; i < N; i++) { const cc = centroid(cellFor(i, pts)); np.push([((cc[0] % S) + S) % S, ((cc[1] % S) + S) % S]); }
     pts = np;
   }
+  // Render from the 3×3 replicated site set so EVERY part of the tile is covered by a
+  // real cell — including the cells whose centres live in a neighbouring tile. This is
+  // what makes the boundary seamless (drawing only home cells leaves a gap-strip at the edge).
+  const all = [];
+  for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) for (const p of pts) all.push([p[0] + dx * S, p[1] + dy * S]);
+  const cellAt = (p) => {
+    let region = [[-S, -S], [2 * S, -S], [2 * S, 2 * S], [-S, 2 * S]];
+    for (const q of all) { if (q !== p) region = clipHalf(region, p, q); if (region.length < 3) break; }
+    return region;
+  };
   const seen = new Set(), segs = [];
-  for (let i = 0; i < N; i++) {
-    const c = cellFor(i, pts); if (c.length < 3) continue;
+  for (const p of all) {
+    if (p[0] < -0.5 * S || p[0] > 1.5 * S || p[1] < -0.5 * S || p[1] > 1.5 * S) continue; // only sites whose cell can touch the tile
+    const c = cellAt(p); if (c.length < 3) continue;
     for (let k = 0; k < c.length; k++) {
       const A = c[k], B = c[(k + 1) % c.length];
-      if (Math.hypot(B[0] - A[0], B[1] - A[1]) < 5) continue;  // drop degenerate Voronoi slivers
+      if (Math.hypot(B[0] - A[0], B[1] - A[1]) < 4) continue;  // drop degenerate Voronoi slivers
       const k1 = `${Math.round(A[0])},${Math.round(A[1])}|${Math.round(B[0])},${Math.round(B[1])}`;
       const k2 = `${Math.round(B[0])},${Math.round(B[1])}|${Math.round(A[0])},${Math.round(A[1])}`;
       if (seen.has(k1) || seen.has(k2)) continue;
@@ -117,7 +128,7 @@ function genIceray(scale, seed) {
    ============================================================ */
 function genStep(scale, seed) {
   const rnd = rng(seed);
-  let n = 3 + Math.round(scale / 100 * 7); n = Math.max(3, n);   // 3..10 panes
+  let n = Math.max(2, 2 + Math.round(scale / 100 * 12));         // 2..14 panes
   const c = S / n;
   const depth = 2 + Math.floor(rnd() * 3);                       // 2..4 nested brackets
   const hand = rnd() < 0.5 ? 1 : 0;                              // global handedness
@@ -154,7 +165,7 @@ function genStep(scale, seed) {
 const KEY = [[0.12, 0.88], [0.12, 0.12], [0.88, 0.12], [0.88, 0.7], [0.34, 0.7], [0.34, 0.34], [0.66, 0.34], [0.66, 0.52]];
 function genKeyfret(scale, seed) {
   const rnd = rng(seed);
-  let n = 4 + Math.round(scale / 100 * 12); n = Math.max(4, Math.round(n / 4) * 4);   // 4..16
+  const n = 4 * Math.max(1, Math.round(1 + scale / 100 * 6));    // {4,8,12,…,28} — multiple of 4 keeps the meander tiling
   const cell = S / n;
   const koff = Math.floor(rnd() * 4);
   const hand = rnd() < 0.5;
@@ -180,7 +191,7 @@ function genKeyfret(scale, seed) {
    ============================================================ */
 function genOctagon(scale, seed) {
   const rnd = rng(seed);
-  let n = 3 + Math.round(scale / 100 * 7); n = Math.max(3, n);   // 3..10
+  let n = Math.max(2, 2 + Math.round(scale / 100 * 11));         // 2..13
   const c = S / n;
   const fr = 0.22 + rnd() * 0.16;                                // cut fraction (0.293 = regular)
   const t = fr * c;
@@ -214,9 +225,9 @@ function genOctagon(scale, seed) {
    ============================================================ */
 function genTortoise(scale, seed) {
   const rnd = rng(seed);
-  const r = Math.round(190 - scale * 1.25);                      // 190..65 (big..fine)
-  const hw = Math.sqrt(3) * r, vh = 1.5 * r;
-  const W = hw, H = 3 * r;                                       // horizontal / vertical periods
+  const nx = Math.max(2, 2 + Math.round(scale / 100 * 11));      // 2..13 columns across the S-tile
+  const ny = Math.max(1, Math.round(nx * 0.5774));              // ≈ nx/√3 → near-regular hexes
+  const hw = S / nx, r = S / (3 * ny), vh = 1.5 * r;           // integer periods that divide S → tiles a square
   const variant = Math.floor(rnd() * 3);                         // 0 plain · 1 inner hex · 2 centre node
   const inner = 0.5 + rnd() * 0.12;
   const hexPath = (cx, cy, rr) => {
@@ -225,15 +236,15 @@ function genTortoise(scale, seed) {
     return `M${pts.join('L')}Z`;
   };
   let d = '', extra = '', row = 0;
-  for (let cy = -r; cy < H + r; cy += vh, row++) {
+  for (let cy = -r; cy < S + r; cy += vh, row++) {
     const off = (row % 2) ? hw / 2 : 0;
-    for (let cx = -hw + off; cx < W + hw; cx += hw) {
+    for (let cx = -hw + off; cx < S + hw; cx += hw) {
       d += hexPath(cx, cy, r);
       if (variant === 1) extra += hexPath(cx, cy, r * inner);
       else if (variant === 2) extra += `M${f(cx)} ${f(cy)}m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0`;
     }
   }
-  return { w: W, h: H, body: `<path d="${d}"/>${extra ? `<path d="${extra}"/>` : ''}`, weight: r * 0.05 };
+  return { w: S, h: S, body: `<path d="${d}"/>${extra ? `<path d="${extra}"/>` : ''}`, weight: r * 0.05 };
 }
 
 /* ============================================================
@@ -243,18 +254,18 @@ function genTortoise(scale, seed) {
    ============================================================ */
 function genTrellis(scale, seed) {
   const rnd = rng(seed);
-  const n = Math.round(4 + scale * 0.16);                        // 4..20
+  const n = Math.max(3, Math.round(3 + scale * 0.22));          // 3..25 cells across the S-tile
   const c = S / n;
   const mode = Math.floor(rnd() * 3);                            // 0 single · 1 doubled weave · 2 inscribed
-  let d = `M0 0L${f(c)} ${f(c)}M${f(c)} 0L0 ${f(c)}`;
-  if (mode === 1) {                                             // a second, offset pair → a woven read
-    const o = c * 0.16;
-    d += `M${f(o)} 0L${f(c)} ${f(c - o)}M${f(c - o)} 0L0 ${f(c - o)}`;
-  } else if (mode === 2) {                                      // small diamond at the cell centre
-    const h = c / 2, q = c * 0.22;
-    d += `M${f(h)} ${f(h - q)}L${f(h + q)} ${f(h)}L${f(h)} ${f(h + q)}L${f(h - q)} ${f(h)}Z`;
+  const o = c * 0.16, h = c / 2, q = c * 0.22;
+  let d = '';
+  for (let r = 0; r < n; r++) for (let col = 0; col < n; col++) {
+    const x = col * c, y = r * c;
+    d += `M${f(x)} ${f(y)}L${f(x + c)} ${f(y + c)}M${f(x + c)} ${f(y)}L${f(x)} ${f(y + c)}`;
+    if (mode === 1) d += `M${f(x + o)} ${f(y)}L${f(x + c)} ${f(y + c - o)}M${f(x + c - o)} ${f(y)}L${f(x)} ${f(y + c - o)}`;
+    else if (mode === 2) d += `M${f(x + h)} ${f(y + h - q)}L${f(x + h + q)} ${f(y + h)}L${f(x + h)} ${f(y + h + q)}L${f(x + h - q)} ${f(y + h)}Z`;
   }
-  return { w: c, h: c, body: `<path d="${d}"/>`, weight: c * 0.05 };
+  return { w: S, h: S, body: `<path d="${d}"/>`, weight: c * 0.05 };
 }
 
 /* ---- the motif registry (cn / en / generator / cultural note + preview & export tile counts) ---- */
@@ -267,9 +278,9 @@ const MOTIFS = {
                  note: 'the endless thunder-scroll meander — the 回 “return” character, continuity without end.' },
   octagon:     { cn: '八角锦', en: 'Octagon',      gen: genOctagon, pv: 1.5, ex: 3,
                  note: 'octagons knotted by small squares — a formal woven net, the 4·8·8 brocade.' },
-  tortoise:    { cn: '龟背', en: 'Tortoise',     gen: genTortoise, pv: 2.6, ex: 5,
+  tortoise:    { cn: '龟背', en: 'Tortoise',     gen: genTortoise, pv: 1.35, ex: 2,
                  note: 'the tortoiseshell hexagon — longevity and cosmic order, nature’s own tessellation.' },
-  trellis:     { cn: '斜格', en: 'Trellis',      gen: genTrellis, pv: 3.6, ex: 6,
+  trellis:     { cn: '斜格', en: 'Trellis',      gen: genTrellis, pv: 1.4, ex: 2,
                  note: 'the diagonal weave of a bamboo screen — light read through the crossings.' },
 };
 const MOTIF_KEYS = Object.keys(MOTIFS);
