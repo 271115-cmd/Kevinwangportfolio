@@ -34,33 +34,40 @@
       </div>
 
       <p class="read-thesis reveal">In Chinese architecture the window screen — <em class="accent">冰裂</em> ice-ray,
-        <em class="accent">回纹</em> key-fret, <em class="accent">龟背</em> tortoiseshell — turns a wall into woven light.
-        Loom treats those rules as a living thread: shuffle a one-of-a-kind screen, dress it in a material mood, and
-        carry it away as a wallpaper, a print, or a seamless tile.</p>
+        <em class="accent">步步锦</em> step-brocade, <em class="accent">回纹</em> key-fret, <em class="accent">八角锦</em>
+        octagon, <em class="accent">龟背</em> tortoiseshell, <em class="accent">斜格</em> trellis — turns a wall into woven
+        light. Loom treats those rules as a living thread: weave a one-of-a-kind, seamlessly-tiling screen, dress it in a
+        material mood, set it in a timber frame, and carry it away as a wallpaper, a print, or a seamless tile.</p>
 
       <div id="loom-app" class="loom2 reveal">
-        <div class="loom-stage">
-          <div id="loom-preview" class="loom-canvas" role="img" aria-label="Live pattern preview"></div>
+        <div class="loom-stage-wrap">
+          <div class="loom-stage">
+            <div id="loom-preview" class="loom-canvas" role="img" aria-label="Live pattern preview"></div>
+          </div>
+          <p id="loom-caption" class="loom-caption mono" aria-hidden="true"></p>
+          <p id="loom-status" class="loom-sr" role="status" aria-live="polite"></p>
         </div>
 
         <div class="loom-rail">
           <div class="loom-block">
-            <span class="loom-eyebrow mono">Motif</span>
-            <div class="loom-motifs">
-              <button class="loom-motif is-on" type="button" data-motif="iceray"><span class="lm-cn">冰裂</span><span class="lm-en">Ice-ray</span></button>
-              <button class="loom-motif" type="button" data-motif="keyfret"><span class="lm-cn">回纹</span><span class="lm-en">Key-fret</span></button>
-              <button class="loom-motif" type="button" data-motif="tortoise"><span class="lm-cn">龟背</span><span class="lm-en">Tortoise</span></button>
-              <button class="loom-motif" type="button" data-motif="trellis"><span class="lm-cn">斜格</span><span class="lm-en">Trellis</span></button>
+            <span class="loom-eyebrow mono" id="loom-motif-lbl">Motif</span>
+            <div class="loom-motifs" role="radiogroup" aria-labelledby="loom-motif-lbl">
+              <button class="loom-motif is-on" type="button" role="radio" aria-checked="true" data-motif="iceray"><span class="lm-cn">冰裂</span><span class="lm-en">Ice-ray</span></button>
+              <button class="loom-motif" type="button" role="radio" aria-checked="false" data-motif="stepbrocade"><span class="lm-cn">步步锦</span><span class="lm-en">Step-brocade</span></button>
+              <button class="loom-motif" type="button" role="radio" aria-checked="false" data-motif="keyfret"><span class="lm-cn">回纹</span><span class="lm-en">Key-fret</span></button>
+              <button class="loom-motif" type="button" role="radio" aria-checked="false" data-motif="octagon"><span class="lm-cn">八角锦</span><span class="lm-en">Octagon</span></button>
+              <button class="loom-motif" type="button" role="radio" aria-checked="false" data-motif="tortoise"><span class="lm-cn">龟背</span><span class="lm-en">Tortoise</span></button>
+              <button class="loom-motif" type="button" role="radio" aria-checked="false" data-motif="trellis"><span class="lm-cn">斜格</span><span class="lm-en">Trellis</span></button>
             </div>
           </div>
 
           <div class="loom-block">
-            <span class="loom-eyebrow mono">Mood</span>
-            <div class="loom-moods" id="loom-moods"></div>
+            <span class="loom-eyebrow mono" id="loom-mood-lbl">Mood</span>
+            <div class="loom-moods" id="loom-moods" role="radiogroup" aria-labelledby="loom-mood-lbl"></div>
           </div>
 
           <div class="loom-block">
-            <label class="loom-eyebrow mono" for="loom-scale">Scale</label>
+            <label class="loom-eyebrow mono" for="loom-scale">Density <span class="loom-val mono" id="loom-scale-out">055</span></label>
             <input id="loom-scale" class="loom-range" type="range" min="0" max="100" value="55" />
           </div>
 
@@ -68,6 +75,20 @@
             <button id="loom-shuffle" class="loom-shuffle" type="button" data-magnetic>Weave a new one ⟳</button>
             <span class="loom-seed mono">seed <b id="loom-seed">0007</b></span>
           </div>
+
+          <details class="loom-refine">
+            <summary class="loom-eyebrow mono">Refine</summary>
+            <div class="loom-refine-body">
+              <div class="loom-block">
+                <span class="loom-eyebrow mono" id="loom-frame-lbl">Frame</span>
+                <div class="loom-frames" id="loom-frames" role="radiogroup" aria-labelledby="loom-frame-lbl"></div>
+              </div>
+              <div class="loom-block">
+                <label class="loom-eyebrow mono" for="loom-weight">Line weight <span class="loom-val mono" id="loom-weight-out">1.00×</span></label>
+                <input id="loom-weight" class="loom-range" type="range" min="0" max="100" value="32" />
+              </div>
+            </div>
+          </details>
 
           <div class="loom-block loom-take">
             <span class="loom-eyebrow mono">Take it</span>
@@ -81,8 +102,10 @@
         </div>
       </div>
 
-      <p class="read-foot mono reveal">Everything runs in your browser. Patterns tile seamlessly; exports are crisp
-        vector (SVG) or high-resolution raster (PNG), up to print sizes. Note the seed to weave the same screen again.</p>
+      <p class="read-foot mono reveal">Everything runs in your browser — no server, no cost. Every screen tiles
+        seamlessly and every seed is one of a kind; exports are crisp vector (SVG) or high-resolution raster (PNG), up to
+        print sizes. The “Seamless tile” preset exports one repeat with the frame off, ready to use as wallpaper. Note the
+        seed to weave the same screen again.</p>
     </section>
   </main>
 
