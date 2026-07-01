@@ -7,7 +7,7 @@
    ============================================================ */
 
 import * as THREE from 'three';
-import { COLORS, zFor } from './config.js';
+import { COLORS, zFor, AXIS_LEN, CINE } from './config.js';
 
 function makeCityTexture() {
   const c = document.createElement('canvas');
@@ -31,14 +31,31 @@ function makeCityTexture() {
   return tex;
 }
 
-export function createGround(scene) {
-  const grid = new THREE.GridHelper(900, 180, COLORS.ink, COLORS.ink);
+export function createGround(scene, { useShadows = false } = {}) {
+  const SIZE = AXIS_LEN + 240;                 // span the whole (now much longer) axis
+  const grid = new THREE.GridHelper(SIZE, Math.round(SIZE / 5), COLORS.ink, COLORS.ink);
   grid.material.transparent = true;
   grid.material.opacity = 0.06;
+  grid.position.set(0, 0, zFor(0.5));          // centre on the axis, not the world origin
   scene.add(grid);
 
+  // a dedicated ShadowMaterial catcher — the city plane (MeshBasic) can't
+  // receive shadows; this soft warm-ink plane grounds the buildings with
+  // contact shadows over the sky, and ignores the massing/satellite fades.
+  if (useShadows) {
+    const catcher = new THREE.Mesh(
+      new THREE.PlaneGeometry(SIZE, SIZE),
+      new THREE.ShadowMaterial({ color: CINE.shadowCatcherColor, opacity: CINE.shadowCatcherOpacity })
+    );
+    catcher.rotation.x = -Math.PI / 2;
+    catcher.position.set(0, -0.05, zFor(0.5));
+    catcher.receiveShadow = true;
+    catcher.renderOrder = -1;
+    scene.add(catcher);
+  }
+
   const plane = new THREE.Mesh(
-    new THREE.PlaneGeometry(900, 900),
+    new THREE.PlaneGeometry(SIZE, SIZE),
     new THREE.MeshBasicMaterial({ map: makeCityTexture(), transparent: true, opacity: 0 })
   );
   plane.rotation.x = -Math.PI / 2;

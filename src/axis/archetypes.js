@@ -48,25 +48,26 @@ const builders = {
   /* southern gate-tower: tall brick platform + single arch, carrying a
      two-storey 5×3 timber pavilion under a 重檐歇山三滴水 (3-eave gable-hip) roof. */
   yongdingmen(B) {
-    const base = gateBase(B, { w: 31, h: 9, d: 17, passages: 1, passW: 5, parapet: true });
-    const b = bayBody(B, { w: 24, d: 11, h: 9, frontBays: 5, depthBays: 3, y: base.topY });
-    roof(B, { w: 28, d: 15, y: b.topY, eaves: 3, roofH: 9, gable: true });
+    const base = gateBase(B, { w: 31, h: 8, d: 17, passages: 1, passW: 5, parapet: true });
+    const b = bayBody(B, { w: 24, d: 11, h: 6, frontBays: 5, depthBays: 3, y: base.topY });
+    roof(B, { w: 28, d: 15, y: b.topY, eaves: 3, roofH: 5, gable: true });
   },
 
   /* Altar of Agriculture → the Taisui Hall: a wide, low single-eave HIP
      hall (7 bays) on a low stone terrace (no balustrade). */
   xiannongtan(B) {
-    const t = terrace(B, { w: 55, d: 30, tiers: 1, tierH: 1.8, inset: 2, balustrade: false, stair: true });
-    const b = bayBody(B, { w: 48, d: 24, h: 12, frontBays: 7, depthBays: 3, y: t.topY });
-    const r = roof(B, { w: 55, d: 31, y: b.topY, eaves: 1, roofH: 12, gable: false });
+    const t = terrace(B, { w: 53, d: 28, tiers: 1, tierH: 1.6, inset: 2, balustrade: false, stair: true });
+    const b = bayBody(B, { w: 47, d: 23, h: 11, frontBays: 7, depthBays: 3, y: t.topY });
+    const r = roof(B, { w: 53, d: 29, y: b.topY, eaves: 1, roofH: 9, gable: false });
     ridgeOrnaments(B, { ridgeHalf: r.ridgeHalf, y: r.ridgeY - 0.4, s: 1.5 });
   },
 
   /* Temple of Heaven → the circular Hall of Prayer: a round timber drum
      under three stacked blue cones + gilt finial, on a round 3-tier terrace. */
   tiantan(B) {
-    const t = roundTerrace(B, { rBase: 34, tiers: 3, tierH: 1.8, inset: 5, balustrade: true, stairs: 8 });
-    circularHall(B, { rBase: 14, eaves: 3, drumH: 8, roofH: 12, y: t.topY });
+    // round 3-tier terrace ~90/79/68 m diameter (real); hall ~32 m diameter
+    const t = roundTerrace(B, { rBase: 45, tiers: 3, tierH: 1.7, inset: 5.5, balustrade: true, stairs: 8 });
+    circularHall(B, { rBase: 16, eaves: 3, drumH: 8, roofH: 11, y: t.topY });
   },
 
   /* Zhengyangmen ENSEMBLE: the Arrow Tower (hero, south) — a pierced
@@ -109,10 +110,10 @@ const builders = {
   /* Tian'anmen: a tall red city-platform pierced by five arches, carrying
      a 9×5 double-eave gable-hip rostrum hall on a balustraded marble terrace. */
   tiananmen(B) {
-    const base = gateBase(B, { w: 60, h: 14, d: 30, passages: 5, passW: 4.4, parapet: false });
-    const t = terrace(B, { w: 50, d: 24, tiers: 1, tierH: 1.6, inset: 1, balustrade: true, waist: true, stair: false, y: base.topY });
-    const b = bayBody(B, { w: 44, d: 20, h: 10, frontBays: 9, depthBays: 5, y: t.topY });
-    roof(B, { w: 50, d: 26, y: b.topY, eaves: 2, roofH: 11, gable: true });
+    const base = gateBase(B, { w: 66, h: 14, d: 34, passages: 5, passW: 4.6, parapet: false });
+    const t = terrace(B, { w: 56, d: 26, tiers: 1, tierH: 1.6, inset: 1, balustrade: true, waist: true, stair: false, y: base.topY });
+    const b = bayBody(B, { w: 52, d: 22, h: 9, frontBays: 9, depthBays: 5, y: t.topY });
+    roof(B, { w: 60, d: 28, y: b.topY, eaves: 2, roofH: 8, gable: true });
   },
 
   /* Outer Jinshui Bridges — seven white-marble arch bridges fanned across
@@ -124,10 +125,10 @@ const builders = {
   /* Duanmen — a plainer twin of Tian'anmen: five arches + 9×5 double-eave
      gable-hip tower, no rostrum or bridges. */
   duanmen(B) {
-    const base = gateBase(B, { w: 54, h: 14, d: 28, passages: 5, passW: 4, parapet: false });
-    const t = terrace(B, { w: 46, d: 22, tiers: 1, tierH: 1.5, inset: 1, balustrade: true, waist: true, stair: false, y: base.topY });
-    const b = bayBody(B, { w: 40, d: 18, h: 9, frontBays: 9, depthBays: 5, y: t.topY });
-    roof(B, { w: 46, d: 24, y: b.topY, eaves: 2, roofH: 10, gable: true });
+    const base = gateBase(B, { w: 60, h: 14, d: 30, passages: 5, passW: 4.2, parapet: false });
+    const t = terrace(B, { w: 50, d: 24, tiers: 1, tierH: 1.5, inset: 1, balustrade: true, waist: true, stair: false, y: base.topY });
+    const b = bayBody(B, { w: 46, d: 20, h: 9, frontBays: 9, depthBays: 5, y: t.topY });
+    roof(B, { w: 54, d: 26, y: b.topY, eaves: 2, roofH: 7, gable: true });
   },
 
   /* The Forbidden City → the Hall of Supreme Harmony: an 11×5 double-eave
@@ -136,7 +137,7 @@ const builders = {
   'forbidden-city'(B) {
     const t = terrace(B, { w: 80, d: 50, tiers: 3, tierH: 2.7, inset: 4, balustrade: true, waist: true, spouts: true, apron: 18, stair: true });
     const b = bayBody(B, { w: 58, d: 30, h: 13, frontBays: 11, depthBays: 5, y: t.topY });
-    const r = roof(B, { w: 66, d: 38, y: b.topY, eaves: 2, roofH: 14, gable: false });
+    const r = roof(B, { w: 66, d: 38, y: b.topY, eaves: 2, roofH: 10, gable: false });
     ridgeOrnaments(B, { ridgeHalf: r.ridgeHalf, y: r.ridgeY - 0.5, s: 2.0 });
   },
 
@@ -145,8 +146,8 @@ const builders = {
      NOT a round temple. Restrained northern corner upturn. */
   taimiao(B) {
     const t = terrace(B, { w: 82, d: 44, tiers: 3, tierH: 1.5, inset: 3.5, balustrade: true, waist: true, stair: true });
-    const b = bayBody(B, { w: 64, d: 32, h: 13, frontBays: 11, depthBays: 6, y: t.topY });
-    const r = roof(B, { w: 72, d: 40, y: b.topY, eaves: 2, roofH: 13, gable: false, lift: 1.0 });
+    const b = bayBody(B, { w: 64, d: 32, h: 15, frontBays: 11, depthBays: 6, y: t.topY });
+    const r = roof(B, { w: 72, d: 40, y: b.topY, eaves: 2, roofH: 9, gable: false, lift: 1.0 });
     ridgeOrnaments(B, { ridgeHalf: r.ridgeHalf, y: r.ridgeY - 0.5, s: 1.7 });
   },
 
@@ -197,12 +198,12 @@ const builders = {
     const drum = createBuild(M);
     const db = gateBase(drum, { w: 56, h: 16, d: 33, passages: 1, passW: 5.5, parapet: false });
     const dbody = bayBody(drum, { w: 40, d: 22, h: 10, frontBays: 5, depthBays: 3, y: db.topY, colonnade: false, wall: true });
-    roof(drum, { w: 50, d: 28, y: dbody.topY, eaves: 3, roofH: 12, gable: true });
+    roof(drum, { w: 50, d: 28, y: dbody.topY, eaves: 3, roofH: 10, gable: true });
     attach(B, drum, 0, 0, 0);         // hero (Drum Tower) centred on the axis terminus
 
     const bell = createBuild(M);
-    const bb = gateBase(bell, { w: 24, h: 26, d: 24, passages: 1, passW: 4, parapet: false });
-    roof(bell, { w: 28, d: 28, y: bb.topY, eaves: 2, roofH: 10, gable: true });
+    const bb = gateBase(bell, { w: 24, h: 30, d: 24, passages: 1, passW: 4, parapet: false });
+    roof(bell, { w: 28, d: 28, y: bb.topY, eaves: 2, roofH: 12, gable: true });
     attach(B, bell, 0, 0, -28);       // Bell Tower 100 m north (compressed for the atlas)
   },
 };

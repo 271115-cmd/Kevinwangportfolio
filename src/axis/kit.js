@@ -22,21 +22,28 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
-/* ---------- shared materials (created once, reused everywhere) ---------- */
+/* ---------- shared materials (created once, reused everywhere) ----------
+   PBR study-model set, tuned for the cinematic layer (IBL + ACES + fog).
+   envMapIntensity is the "anti-wet" knob — enough that whites read as
+   sculpted marble under the sky, not so much they look glossy. The SELECTED
+   monument's cinnabar roles carry a faint emissive so it reads as self-lit
+   and pops against the lit off-white neighbours. Shape is byte-identical to
+   before (on.{stone,timber,roof,detail} / off / edge) so setFocus/finalize
+   are untouched. */
 export function makeMaterials() {
-  const std = (color, roughness = 0.9) =>
-    new THREE.MeshStandardMaterial({ color, roughness, metalness: 0, flatShading: false });
+  const std = (color, roughness, envMapIntensity, emissive, emissiveIntensity) =>
+    new THREE.MeshStandardMaterial({
+      color, roughness, metalness: 0, envMapIntensity,
+      ...(emissive != null ? { emissive, emissiveIntensity } : {}),
+    });
   return {
-    // ON set — the SELECTED monument turns cinnabar red so it is unmistakable;
-    // tonal by role (lighter platforms → deep roofs) so detail still reads.
     on: {
-      stone: std(0xC85B4A, 0.75),   // marble platforms / balustrades — lightest red
-      timber: std(0xB03A2B, 0.85),  // walls, columns, bodies — mid red
-      roof: std(0x8F2A20, 0.9),    // the great roofs — deep red
-      detail: std(0xA83830, 0.88),  // brackets, ornaments
+      stone:  std(0xC85B4A, 0.52, 0.55, 0x3A0D08, 0.18),  // marble platforms/balustrades
+      timber: std(0xB03A2B, 0.74, 0.30, 0x330A06, 0.16),  // walls, columns, bodies
+      roof:   std(0x8F2A20, 0.60, 0.42, 0x2A0704, 0.20),  // the great roofs
+      detail: std(0xA83830, 0.66, 0.34, 0x300805, 0.22),  // brackets, ornaments
     },
-    // OFF set — neighbouring monuments: one quiet flat off-white (still legible)
-    off: std(0xEFEDE7, 1.0),
+    off: std(0xEFEDE7, 0.68, 0.45),   // neighbours — quiet sculpted off-white
     edge: new THREE.LineBasicMaterial({ color: 0x55110B, transparent: true, opacity: 0.7 }),
   };
 }
@@ -140,6 +147,7 @@ export function createBuild(M) {
       list.forEach((g) => g.dispose());
       const mesh = new THREE.Mesh(merged, M.off);
       mesh.userData.role = role;
+      mesh.castShadow = true; mesh.receiveShadow = true;   // soft shadows (cinematic layer)
       group.add(mesh);
       meshes.push({ mesh, role });
     }
@@ -233,12 +241,12 @@ function gableEnds(B, { rx, breakY, ridgeY, gw, y }) {
 /* place a roof on a build at height y. eaves stack with a short inter-eave
    wall band (重檐 / 三滴水). gable=true → 歇山 gable-hip (longer ridge + end
    gable walls); else 庑殿 hip. ridgeFrac=0 → 攒尖 pyramidal point. */
-export function roof(B, { w, d, y, eaves = 1, roofH, ov, lift, ridgeFrac, gable = false, gap = 1.6, shrink = 0.78 }) {
+export function roof(B, { w, d, y, eaves = 1, roofH, ov, lift, ridgeFrac, gable = false, gap = 1.1, shrink = 0.8 }) {
   const rf = ridgeFrac ?? (gable ? 0.62 : 0.42);
   let cw = w, cd = d, cy = y;
   for (let e = 0; e < eaves; e++) {
     const top = e === eaves - 1;
-    const hgt = roofH * (top ? 1 : 0.60);
+    const hgt = roofH * (top ? 1 : 0.45);
     const rfrac = top ? rf : 0;                 // lower eaves are skirts (no exposed ridge)
     const { geo, segs } = roofShell({
       w: cw, d: cd, h: hgt,

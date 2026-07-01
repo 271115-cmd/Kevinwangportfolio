@@ -420,7 +420,7 @@ body.dd-open #dd-scrim { pointer-events: auto; }
 /* ============================================================
    THE LIVING CENTRAL AXIS — DOM chrome only, austere
    ============================================================ */
-#axis-canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 0; background: var(--paper); pointer-events: none; }
+#axis-canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 0; background: #F3E9D8; pointer-events: none; transition: opacity .5s ease; }
 .axis-page { position: relative; z-index: 1; }
 .axis-hero { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; padding-top: var(--header-h); }
 .ax-eyebrow { color: var(--ink); display: flex; gap: .6rem; align-items: baseline; margin-bottom: 1rem; }
@@ -428,7 +428,7 @@ body.dd-open #dd-scrim { pointer-events: auto; }
 .axis-lead { margin-top: 1rem; max-width: 54ch; line-height: 1.4; }
 .axis-lead .accent { font-style: italic; }
 .ax-cue { margin-top: 1.6rem; color: var(--ink); }
-.axis-journey { height: 1200vh; }
+.axis-journey { height: 1900vh; }
 .axis-narration, .axis-rail { position: fixed; z-index: 6; opacity: 0; visibility: hidden; transition: opacity .4s; }
 body.axis-active .axis-narration, body.axis-active .axis-rail { opacity: 1; visibility: visible; }
 .axis-narration { left: var(--pad); bottom: 9vh; width: min(420px,44vw); background: var(--paper); border: 1px solid var(--line); padding: 1rem 1.1rem; }
