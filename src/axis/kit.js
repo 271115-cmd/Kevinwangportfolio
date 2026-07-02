@@ -30,20 +30,58 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
    and pops against the lit off-white neighbours. Shape is byte-identical to
    before (on.{stone,timber,roof,detail} / off / edge) so setFocus/finalize
    are untouched. */
+/* ---- micro-detail (stage 6, deeper half) ----
+   The merged geometry has NO UVs, so texture maps can't work. Instead we
+   inject WORLD-SPACE procedural noise via onBeforeCompile: it perturbs
+   roughness (so gloss is never uniform — the Duyichu "sharedRough" goal)
+   AND the surface normal (faint tactile micro-relief that catches the sun),
+   with zero UV/tangent dependency. Amplitudes stay small — this is a white
+   study-model, not weathered stone; it should read as "hand-made", not dirty. */
+const MICRO_NOISE = `
+float mHash(vec3 p){ p = fract(p*0.3183099+0.1); p*=17.0; return fract(p.x*p.y*p.z*(p.x+p.y+p.z)); }
+float mNoise(vec3 x){ vec3 i=floor(x), f=fract(x); f=f*f*(3.0-2.0*f);
+  return mix(mix(mix(mHash(i+vec3(0,0,0)),mHash(i+vec3(1,0,0)),f.x),mix(mHash(i+vec3(0,1,0)),mHash(i+vec3(1,1,0)),f.x),f.y),
+             mix(mix(mHash(i+vec3(0,0,1)),mHash(i+vec3(1,0,1)),f.x),mix(mHash(i+vec3(0,1,1)),mHash(i+vec3(1,1,1)),f.x),f.y),f.z); }
+float mFbm(vec3 p){ return 0.66*mNoise(p) + 0.34*mNoise(p*2.09+11.1); }
+`;
+
+function applyMicroDetail(mat, { scale, rough, bump }) {
+  mat.onBeforeCompile = (shader) => {
+    shader.uniforms.uMicroScale = { value: scale };
+    shader.uniforms.uMicroRough = { value: rough };
+    shader.uniforms.uMicroBump = { value: bump };
+    shader.vertexShader = shader.vertexShader
+      .replace('#include <common>', '#include <common>\nvarying vec3 vMWPos; varying vec3 vMWN;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\n vMWPos = (modelMatrix * vec4(transformed, 1.0)).xyz;')
+      .replace('#include <beginnormal_vertex>', '#include <beginnormal_vertex>\n vMWN = normalize(mat3(modelMatrix) * objectNormal);');
+    shader.fragmentShader = shader.fragmentShader
+      .replace('#include <common>', '#include <common>\nvarying vec3 vMWPos; varying vec3 vMWN;\nuniform float uMicroScale, uMicroRough, uMicroBump;\n' + MICRO_NOISE)
+      .replace('#include <roughnessmap_fragment>',
+        '#include <roughnessmap_fragment>\n{ float mn = mFbm(vMWPos*uMicroScale); roughnessFactor = clamp(roughnessFactor + uMicroRough*(mn-0.5), 0.04, 1.0); }')
+      .replace('#include <normal_fragment_maps>',
+        '#include <normal_fragment_maps>\n{ vec3 sp=vMWPos*uMicroScale; float e=0.32; float h=mNoise(sp);'   // single-octave gradient (cheap high-freq relief)
+        + ' vec3 g=vec3(mNoise(sp+vec3(e,0.,0.))-h, mNoise(sp+vec3(0.,e,0.))-h, mNoise(sp+vec3(0.,0.,e))-h)/e;'
+        + ' vec3 wn=normalize(vMWN); vec3 gt=g-dot(g,wn)*wn; vec3 gv=mat3(viewMatrix)*gt; normal=normalize(normal - uMicroBump*gv); }');
+  };
+  mat.customProgramCacheKey = () => 'micro' + scale + '_' + rough + '_' + bump;
+  return mat;
+}
+
 export function makeMaterials() {
   const std = (color, roughness, envMapIntensity, emissive, emissiveIntensity) =>
     new THREE.MeshStandardMaterial({
       color, roughness, metalness: 0, envMapIntensity,
       ...(emissive != null ? { emissive, emissiveIntensity } : {}),
     });
+  const micro = (mat, scale, rough, bump) => applyMicroDetail(mat, { scale, rough, bump });
   return {
     on: {
-      stone:  std(0xC85B4A, 0.52, 0.55, 0x3A0D08, 0.18),  // marble platforms/balustrades
-      timber: std(0xB03A2B, 0.74, 0.30, 0x330A06, 0.16),  // walls, columns, bodies
-      roof:   std(0x8F2A20, 0.60, 0.42, 0x2A0704, 0.20),  // the great roofs
-      detail: std(0xA83830, 0.66, 0.34, 0x300805, 0.22),  // brackets, ornaments
+      stone:  micro(std(0xC85B4A, 0.52, 0.55, 0x3A0D08, 0.18), 3.2, 0.15, 0.045),  // marble — smoothest
+      timber: micro(std(0xB03A2B, 0.74, 0.30, 0x330A06, 0.16), 2.2, 0.23, 0.090),  // walls/columns — grainier
+      roof:   micro(std(0x8F2A20, 0.60, 0.42, 0x2A0704, 0.20), 2.6, 0.20, 0.074),  // tiled roofs
+      detail: micro(std(0xA83830, 0.66, 0.34, 0x300805, 0.22), 2.8, 0.20, 0.074),  // brackets/ornaments
     },
-    off: std(0xEFEDE7, 0.68, 0.45),   // neighbours — quiet sculpted off-white
+    off: micro(std(0xEFEDE7, 0.68, 0.45), 2.4, 0.17, 0.062),   // neighbours — sculpted off-white
     edge: new THREE.LineBasicMaterial({ color: 0x55110B, transparent: true, opacity: 0.7 }),
   };
 }
@@ -176,12 +214,12 @@ export function createBuild(M) {
    ============================================================ */
 function roofShell({
   w, d, h, ov = 1.4, lift = 1.2, ridgeFrac = 0.42,
-  sag = 0.14, cols = 8, rows = 5,
+  sag = 0.11, cols = 8, rows = 5,
 }) {
   const ew = w / 2 + ov, ed = d / 2 + ov;
   const rx = ridgeFrac * (w / 2);
   const R0 = V(-rx, h, 0), R1 = V(rx, h, 0);
-  const flare = (t) => Math.pow(Math.abs(t), 2.7);              // 0 centre → 1 at corner (起翘)
+  const flare = (t) => Math.pow(Math.abs(t), 3.4);              // 0 centre → 1 at corner (起翘; northern restraint = flat eave, subtle tick)
   const dip = (v) => -sag * h * Math.sin(Math.PI * v);          // concave sweep (反宇)
 
   // eave edges (corner-lifted + cambered), param 0..1
@@ -251,7 +289,7 @@ export function roof(B, { w, d, y, eaves = 1, roofH, ov, lift, ridgeFrac, gable 
     const { geo, segs } = roofShell({
       w: cw, d: cd, h: hgt,
       ov: ov ?? Math.max(1.0, cw * 0.13),
-      lift: lift ?? Math.max(0.8, cw * 0.05),
+      lift: lift ?? Math.max(0.35, hgt * 0.13),   // upturn scales with THIS eave's height, so short skirts flare little
       ridgeFrac: rfrac,
     });
     B.addGeo('roof', geo, 0, cy, 0, { edges: false });
@@ -273,7 +311,7 @@ export function roof(B, { w, d, y, eaves = 1, roofH, ov, lift, ridgeFrac, gable 
 export function pyramidRoof(B, { w, d, y, roofH, ov, lift, finial = true }) {
   const { geo, segs } = roofShell({
     w, d, h: roofH, ridgeFrac: 0,
-    ov: ov ?? w * 0.16, lift: lift ?? w * 0.08, rows: 5, cols: 7,
+    ov: ov ?? w * 0.16, lift: lift ?? w * 0.042, rows: 5, cols: 7,
   });
   B.addGeo('roof', geo, 0, y, 0, { edges: false });
   B.addLines(segs, 0, y, 0);

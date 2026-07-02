@@ -186,6 +186,9 @@ export function createScene(canvas) {
     }
   }
 
+  // dev-only camera-snap hook (?snap) for headless verification; import.meta.env.DEV
+  // is false in production, so this whole expression tree-shakes out of the build.
+  const SNAP = import.meta.env.DEV && /[?&]snap/.test(location.search);
   let current = null;             // latest state snapshot
   let curAxisPos = 0;             // smoothed camera driver
   const lookTarget = new THREE.Vector3();   // reused — no per-frame allocation
@@ -211,7 +214,7 @@ export function createScene(canvas) {
 
   function frame() {
     const target = current ? current.axisPos : 0;
-    curAxisPos += (target - curAxisPos) * CAM.lerp;
+    curAxisPos += (target - curAxisPos) * (SNAP ? 1 : CAM.lerp);
     const fz = focalZ(curAxisPos);
     camera.position.set(camPose.posX, camPose.posY, fz + camPose.back);
     lookTarget.set(0, camPose.lookY, fz - camPose.ahead);

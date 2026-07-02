@@ -147,7 +147,7 @@ const builders = {
   taimiao(B) {
     const t = terrace(B, { w: 82, d: 44, tiers: 3, tierH: 1.5, inset: 3.5, balustrade: true, waist: true, stair: true });
     const b = bayBody(B, { w: 64, d: 32, h: 15, frontBays: 11, depthBays: 6, y: t.topY });
-    const r = roof(B, { w: 72, d: 40, y: b.topY, eaves: 2, roofH: 9, gable: false, lift: 1.0 });
+    const r = roof(B, { w: 72, d: 40, y: b.topY, eaves: 2, roofH: 9, gable: false });
     ridgeOrnaments(B, { ridgeHalf: r.ridgeHalf, y: r.ridgeY - 0.5, s: 1.7 });
   },
 
