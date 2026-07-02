@@ -62,7 +62,7 @@ export const CINE = {
   shadowBias: -0.0004, shadowNormalBias: 0.6, shadowRadius: 4,
   shadowCatcherOpacity: 0.24, shadowCatcherColor: 0x2A2620,
   // bloom (UnrealBloomPass)
-  bloomStrength: 0.30, bloomRadius: 0.60, bloomThreshold: 0.85,
+  bloomStrength: 0.26, bloomRadius: 0.60, bloomThreshold: 0.92,
   // grade + vignette (golden-hour preset)
   gradeLift:  [0.010, 0.006, -0.004],
   gradeGamma: [1.02, 1.00, 0.96],

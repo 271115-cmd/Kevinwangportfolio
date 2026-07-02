@@ -68,22 +68,32 @@ function applyMicroDetail(mat, { scale, rough, bump }) {
 }
 
 export function makeMaterials() {
-  const std = (color, roughness, envMapIntensity, emissive, emissiveIntensity) =>
-    new THREE.MeshStandardMaterial({
-      color, roughness, metalness: 0, envMapIntensity,
-      ...(emissive != null ? { emissive, emissiveIntensity } : {}),
-    });
-  const micro = (mat, scale, rough, bump) => applyMicroDetail(mat, { scale, rough, bump });
-  return {
-    on: {
-      stone:  micro(std(0xC85B4A, 0.52, 0.55, 0x3A0D08, 0.18), 3.2, 0.15, 0.045),  // marble — smoothest
-      timber: micro(std(0xB03A2B, 0.74, 0.30, 0x330A06, 0.16), 2.2, 0.23, 0.090),  // walls/columns — grainier
-      roof:   micro(std(0x8F2A20, 0.60, 0.42, 0x2A0704, 0.20), 2.6, 0.20, 0.074),  // tiled roofs
-      detail: micro(std(0xA83830, 0.66, 0.34, 0x300805, 0.22), 2.8, 0.20, 0.074),  // brackets/ornaments
-    },
-    off: micro(std(0xEFEDE7, 0.68, 0.45), 2.4, 0.17, 0.062),   // neighbours — sculpted off-white
-    edge: new THREE.LineBasicMaterial({ color: 0x55110B, transparent: true, opacity: 0.7 }),
+  const S = THREE.MeshStandardMaterial, P = THREE.MeshPhysicalMaterial;
+  // one shared singleton per material role; micro-detail rides on each (per-role
+  // shader program). Glazed tiles + lacquer use MeshPhysical (clearcoat) for the
+  // wet-glaze read; everything else is MeshStandard. Hexes are pushed a touch
+  // to survive ACES (per the material research). ONE metal only: gilt.
+  const mk = (Type, o, micro) => applyMicroDetail(new Type({ metalness: 0, ...o }), micro);
+  const on = {
+    marble:  mk(S, { color: 0xE9E7DE, roughness: 0.42, envMapIntensity: 1.05 }, { scale: 3.0, rough: 0.10, bump: 0.030 }),   // 汉白玉
+    wall:    mk(S, { color: 0xA5382C, roughness: 0.70, envMapIntensity: 0.85 }, { scale: 2.2, rough: 0.15, bump: 0.055 }),   // 红墙 plaster
+    timber:  mk(P, { color: 0x9E332A, roughness: 0.52, envMapIntensity: 0.95, clearcoat: 0.18, clearcoatRoughness: 0.5 }, { scale: 2.4, rough: 0.12, bump: 0.045 }),  // 朱柱 lacquer
+    bracket: mk(S, { color: 0x1E5A8C, roughness: 0.55, envMapIntensity: 0.90 }, { scale: 3.0, rough: 0.12, bump: 0.040 }),   // 彩画 caihua blue-green
+    roofYellow: mk(P, { color: 0xDDA221, roughness: 0.38, envMapIntensity: 0.9, clearcoat: 0.22, clearcoatRoughness: 0.30 }, { scale: 3.4, rough: 0.09, bump: 0.032 }), // 黄琉璃瓦 emperor
+    roofBlue:   mk(P, { color: 0x2C56A0, roughness: 0.36, envMapIntensity: 0.95, clearcoat: 0.22, clearcoatRoughness: 0.30 }, { scale: 3.4, rough: 0.09, bump: 0.032 }), // 蓝琉璃瓦 Heaven
+    roofGreen:  mk(P, { color: 0x2E7A54, roughness: 0.38, envMapIntensity: 0.9, clearcoat: 0.20, clearcoatRoughness: 0.32 }, { scale: 3.4, rough: 0.09, bump: 0.032 }), // 绿琉璃瓦
+    roofBlack:  mk(P, { color: 0x24262C, roughness: 0.34, envMapIntensity: 1.0, clearcoat: 0.28, clearcoatRoughness: 0.24 }, { scale: 3.4, rough: 0.09, bump: 0.032 }), // 黑琉璃瓦
+    roofGrey:   mk(S, { color: 0x6E6F71, roughness: 0.82, envMapIntensity: 0.60 }, { scale: 2.4, rough: 0.18, bump: 0.060 }),  // 布瓦 commoner, dead matte
+    gilt:    mk(S, { color: 0xC79A3B, roughness: 0.28, metalness: 1.0, envMapIntensity: 1.40 }, { scale: 3.5, rough: 0.06, bump: 0.020 }),  // 鎏金 — the only metal
+    brick:   mk(S, { color: 0x76767A, roughness: 0.85, envMapIntensity: 0.55 }, { scale: 2.0, rough: 0.20, bump: 0.070 }),   // 青砖 city masonry
+    stone:   mk(S, { color: 0x8A8983, roughness: 0.70, envMapIntensity: 0.70 }, { scale: 2.2, rough: 0.16, bump: 0.055 }),   // 条石 granite/paving
+    earth:   mk(S, { color: 0x9C8A6A, roughness: 0.95, envMapIntensity: 0.40 }, { scale: 1.8, rough: 0.22, bump: 0.080 }),   // rammed soil / mound
+    bronze:  mk(S, { color: 0x5C5147, roughness: 0.55, metalness: 0.85, envMapIntensity: 0.80 }, { scale: 2.8, rough: 0.14, bump: 0.050 }), // oxidised bronze bell
   };
+  // NEIGHBOUR "ghost" — pale flat warm-grey; no micro-detail (recedes)
+  const off = new THREE.MeshStandardMaterial({ color: 0xD8D4C9, roughness: 0.78, metalness: 0, envMapIntensity: 0.5 });
+  const edge = new THREE.LineBasicMaterial({ color: 0x2E2620, transparent: true, opacity: 0.42 });
+  return { on, off, edge };
 }
 
 /* ---------- tiny vector + geometry helpers ---------- */
@@ -148,7 +158,7 @@ function matrixOf(x, y, z, opt) {
    ============================================================ */
 export function createBuild(M) {
   const group = new THREE.Group();
-  const buckets = { stone: [], timber: [], roof: [], detail: [] };
+  const buckets = {};              // role → geometry[] (dynamic; merged per role on finalize)
   const edgeGeos = [];
   const meshes = [];   // filled on finalize: { mesh, role }
   const edges = [];    // filled on finalize: [LineSegments]
@@ -157,7 +167,7 @@ export function createBuild(M) {
   function addGeo(role, geo, x = 0, y = 0, z = 0, opt = {}) {
     const mtx = matrixOf(x, y, z, opt);
     const g = faceGeo(geo); g.applyMatrix4(mtx);
-    (buckets[role] || buckets.detail).push(g);
+    (buckets[role] || (buckets[role] = [])).push(g);
     if (opt.edges !== false) {
       const eg = opt.edgeGeo ? opt.edgeGeo.clone() : new THREE.EdgesGeometry(geo, opt.edgeAngle ?? 18);
       eg.applyMatrix4(mtx); edgeGeos.push(eg);
@@ -262,15 +272,19 @@ function roofShell({
   return { geo: geomFrom(pos), segs };
 }
 
+/* rank-coded glazed-tile roof role from a short colour key (see makeMaterials) */
+const ROOF_ROLE = { yellow: 'roofYellow', blue: 'roofBlue', green: 'roofGreen', black: 'roofBlack', grey: 'roofGrey', stone: 'stone', marble: 'marble' };
+const roofRoleOf = (tile) => ROOF_ROLE[tile] || 'roofGrey';
+
 /* vertical triangular gable wall (山花) at each end of a 歇山 ridge, set
    back from the eave (收山), with sloping barge-boards (博风板). */
-function gableEnds(B, { rx, breakY, ridgeY, gw, y }) {
+function gableEnds(B, { rx, breakY, ridgeY, gw, y, role = 'roofGrey' }) {
   const tri = (sx) => {
     const apex = V(sx * rx, ridgeY, 0);
     const b = V(sx * rx, breakY, gw / 2), c = V(sx * rx, breakY, -gw / 2);
     const pos = [];
     pushTri(pos, apex, b, c); pushTri(pos, apex, c, b);   // double-sided gable panel
-    B.addGeo('detail', geomFrom(pos), 0, y, 0, { edges: false });
+    B.addGeo(role, geomFrom(pos), 0, y, 0, { edges: false });
     B.addLines([[apex, b], [apex, c], [b, c]], 0, y, 0);  // barge-boards + base
   };
   tri(1); tri(-1);
@@ -279,8 +293,9 @@ function gableEnds(B, { rx, breakY, ridgeY, gw, y }) {
 /* place a roof on a build at height y. eaves stack with a short inter-eave
    wall band (重檐 / 三滴水). gable=true → 歇山 gable-hip (longer ridge + end
    gable walls); else 庑殿 hip. ridgeFrac=0 → 攒尖 pyramidal point. */
-export function roof(B, { w, d, y, eaves = 1, roofH, ov, lift, ridgeFrac, gable = false, gap = 1.1, shrink = 0.8 }) {
+export function roof(B, { w, d, y, eaves = 1, roofH, ov, lift, ridgeFrac, gable = false, gap = 1.1, shrink = 0.8, tile = 'grey' }) {
   const rf = ridgeFrac ?? (gable ? 0.62 : 0.42);
+  const role = roofRoleOf(tile);              // rank-coded glazed-tile material
   let cw = w, cd = d, cy = y;
   for (let e = 0; e < eaves; e++) {
     const top = e === eaves - 1;
@@ -292,28 +307,28 @@ export function roof(B, { w, d, y, eaves = 1, roofH, ov, lift, ridgeFrac, gable 
       lift: lift ?? Math.max(0.35, hgt * 0.13),   // upturn scales with THIS eave's height, so short skirts flare little
       ridgeFrac: rfrac,
     });
-    B.addGeo('roof', geo, 0, cy, 0, { edges: false });
+    B.addGeo(role, geo, 0, cy, 0, { edges: false });
     B.addLines(segs, 0, cy, 0);
     if (top && gable && rfrac > 0.01) {
-      gableEnds(B, { rx: rfrac * (cw / 2), breakY: hgt * 0.42, ridgeY: hgt, gw: cd * 0.5, y: cy });
+      gableEnds(B, { rx: rfrac * (cw / 2), breakY: hgt * 0.42, ridgeY: hgt, gw: cd * 0.5, y: cy, role });
     }
     if (!top) {
       cy += hgt - gap * 0.3;
-      B.box('timber', cw * shrink * 0.92, gap, cd * shrink * 0.92, 0, cy + gap / 2, 0);  // storey/clerestory band
+      B.box('wall', cw * shrink * 0.92, gap, cd * shrink * 0.92, 0, cy + gap / 2, 0);  // clerestory wall band (红墙)
       cy += gap;
       cw *= shrink; cd *= shrink;
     }
   }
-  return { ridgeHalf: rf * (cw / 2), ridgeY: cy + roofH };
+  return { ridgeHalf: rf * (cw / 2), ridgeY: cy + roofH, role };
 }
 
 /* a square pyramidal roof (攒尖) → for pavilions; ridgeFrac 0 + finial */
-export function pyramidRoof(B, { w, d, y, roofH, ov, lift, finial = true }) {
+export function pyramidRoof(B, { w, d, y, roofH, ov, lift, finial = true, tile = 'grey' }) {
   const { geo, segs } = roofShell({
     w, d, h: roofH, ridgeFrac: 0,
     ov: ov ?? w * 0.16, lift: lift ?? w * 0.042, rows: 5, cols: 7,
   });
-  B.addGeo('roof', geo, 0, y, 0, { edges: false });
+  B.addGeo(roofRoleOf(tile), geo, 0, y, 0, { edges: false });
   B.addLines(segs, 0, y, 0);
   if (finial) finialTop(B, { y: y + roofH, r: Math.max(0.4, w * 0.05) });
 }
@@ -323,7 +338,7 @@ export function pyramidRoof(B, { w, d, y, roofH, ov, lift, finial = true }) {
    Good Harvests (祈年殿) idiom: a round timber drum carrying 2–3
    blue-tile cones, crowned by a gold treasure-top.
    ============================================================ */
-export function circularHall(B, { rBase, eaves = 3, drumH, roofH, y = 0, finial = true }) {
+export function circularHall(B, { rBase, eaves = 3, drumH, roofH, y = 0, finial = true, tile = 'blue' }) {
   let r = rBase, cy = y;
   // round timber drum (with a hint of columns as facets)
   B.cyl('timber', rBase * 0.96, rBase, drumH, 0, cy + drumH / 2, 0, 28);
@@ -334,7 +349,7 @@ export function circularHall(B, { rBase, eaves = 3, drumH, roofH, y = 0, finial 
     const h = roofH * (top ? 1 : 0.66);
     // conical eave: a wide flaring skirt (cylinder, small top → wide overhanging base)
     const skirt = new THREE.CylinderGeometry(r * (top ? 0.10 : 0.74), r + ov, h, 28, 1, true);
-    B.addGeo('roof', skirt, 0, cy + h / 2, 0, { edges: false });
+    B.addGeo(roofRoleOf(tile), skirt, 0, cy + h / 2, 0, { edges: false });
     // eave ring line
     const ringSegs = [];
     const n = 28, rr = r + ov;
@@ -359,17 +374,17 @@ export function circularHall(B, { rBase, eaves = 3, drumH, roofH, y = 0, finial 
    PLATFORMS — tiered marble terrace (须弥座) with optional carved
    balustrade (栏杆: 望柱 posts + rails) and a south staircase ramp.
    ============================================================ */
-export function terrace(B, { w, d, tiers = 1, tierH = 1.6, inset = 1.8, balustrade = false, stair = true, waist = false, apron = 0, spouts = false, y = 0 }) {
+export function terrace(B, { w, d, tiers = 1, tierH = 1.6, inset = 1.8, balustrade = false, stair = true, waist = false, apron = 0, spouts = false, mat = 'marble', y = 0 }) {
   let cw = w, cd = d, cy = y;
   for (let t = 0; t < tiers; t++) {
     if (waist && tierH > 1.2) {
       // 须弥座 profile: base fascia → recessed waist (束腰) → cap fascia
       const baseH = tierH * 0.34, waistH = tierH * 0.32, capH = tierH - baseH - waistH;
-      B.box('stone', cw, baseH, cd, 0, cy + baseH / 2, 0);
-      B.box('stone', cw - 1.2, waistH, cd - 1.2, 0, cy + baseH + waistH / 2, 0);
-      B.box('stone', cw, capH, cd, 0, cy + baseH + waistH + capH / 2, 0);
+      B.box(mat, cw, baseH, cd, 0, cy + baseH / 2, 0);
+      B.box(mat, cw - 1.2, waistH, cd - 1.2, 0, cy + baseH + waistH / 2, 0);
+      B.box(mat, cw, capH, cd, 0, cy + baseH + waistH + capH / 2, 0);
     } else {
-      B.box('stone', cw, tierH, cd, 0, cy + tierH / 2, 0);
+      B.box(mat, cw, tierH, cd, 0, cy + tierH / 2, 0);
     }
     const top = t === tiers - 1;
     if (spouts) spoutRing(B, { w: cw, d: cd, y: cy + tierH * 0.7 });
@@ -379,7 +394,7 @@ export function terrace(B, { w, d, tiers = 1, tierH = 1.6, inset = 1.8, balustra
   }
   if (apron > 0) {
     // 月台 forward ceremonial terrace at the top level
-    B.box('stone', (cw + inset * 2) * 0.92, tierH, apron, 0, cy - tierH / 2, (cd + inset * 2) / 2 + apron / 2 - 0.5);
+    B.box(mat, (cw + inset * 2) * 0.92, tierH, apron, 0, cy - tierH / 2, (cd + inset * 2) / 2 + apron / 2 - 0.5);
     if (balustrade) balustradeRing(B, { w: (cw + inset * 2) * 0.92, d: apron, y: cy, h: 1.0, gapSouth: true });
   }
   if (stair) {
@@ -387,20 +402,20 @@ export function terrace(B, { w, d, tiers = 1, tierH = 1.6, inset = 1.8, balustra
     const totalH = tiers * tierH;
     const run = inset * 2 + 2.5;
     const z0 = (d - (tiers - 1) * inset * 2) / 2 + apron;
-    B.addGeo('stone', new THREE.BoxGeometry(w * 0.14, totalH, run), 0, y + totalH / 2, z0 + run / 2 - 0.5);  // ramp
+    B.addGeo(mat, new THREE.BoxGeometry(w * 0.14, totalH, run), 0, y + totalH / 2, z0 + run / 2 - 0.5);  // ramp
     const steps = Math.max(3, Math.round(totalH / 0.9));
     for (let s = 0; s < steps; s++) {
       const sh = totalH * (1 - s / steps);
-      B.box('stone', w * 0.30, sh, run / steps * 1.2, w * 0.24, y + sh / 2, z0 + (run / steps) * s);
-      B.box('stone', w * 0.30, sh, run / steps * 1.2, -w * 0.24, y + sh / 2, z0 + (run / steps) * s);
+      B.box(mat, w * 0.30, sh, run / steps * 1.2, w * 0.24, y + sh / 2, z0 + (run / steps) * s);
+      B.box(mat, w * 0.30, sh, run / steps * 1.2, -w * 0.24, y + sh / 2, z0 + (run / steps) * s);
     }
   }
   return { topW: cw + inset * 2, topD: cd + inset * 2, topY: cy };
 }
 
-/* a ring of 螭首 dragon-head drain spouts projecting from beneath a tier */
+/* a ring of 螭首 dragon-head marble drain spouts projecting from beneath a tier */
 function spoutRing(B, { w, d, y }) {
-  const stud = (x, z, ax) => B.box('detail', ax ? 0.9 : 0.4, 0.4, ax ? 0.4 : 0.9, x, y, z);
+  const stud = (x, z, ax) => B.box('marble', ax ? 0.9 : 0.4, 0.4, ax ? 0.4 : 0.9, x, y, z);
   const nx = Math.max(3, Math.round(w / 3.2)), nz = Math.max(3, Math.round(d / 3.2));
   for (let i = 0; i <= nx; i++) { const x = -w / 2 + (w / nx) * i; stud(x, d / 2 + 0.3, false); stud(x, -d / 2 - 0.3, false); }
   for (let j = 1; j < nz; j++) { const z = -d / 2 + (d / nz) * j; stud(w / 2 + 0.3, z, true); stud(-w / 2 - 0.3, z, true); }
@@ -408,10 +423,10 @@ function spoutRing(B, { w, d, y }) {
 
 /* a ring of balustrade posts + a top rail around a rectangle */
 export function balustradeRing(B, { w, d, y, h = 1.0, postEvery = 2.4, gapSouth = false }) {
-  const post = (x, z) => B.box('stone', 0.3, h, 0.3, x, y + h / 2, z);
+  const post = (x, z) => B.box('marble', 0.3, h, 0.3, x, y + h / 2, z);
   const railH = 0.16;
   const rail = (w2, d2, x, z, horiz) =>
-    B.box('stone', horiz ? w2 : 0.18, railH, horiz ? 0.18 : d2, x, y + h * 0.7, z);
+    B.box('marble', horiz ? w2 : 0.18, railH, horiz ? 0.18 : d2, x, y + h * 0.7, z);
   const nx = Math.max(2, Math.round(w / postEvery));
   const nz = Math.max(2, Math.round(d / postEvery));
   for (let i = 0; i <= nx; i++) {
@@ -433,7 +448,7 @@ export function balustradeRing(B, { w, d, y, h = 1.0, postEvery = 2.4, gapSouth 
 export function bayBody(B, { w, d, h, frontBays = 7, depthBays = 5, y = 0, colonnade = true, dougong = true, wall = true }) {
   const colR = Math.min(w / frontBays, d / depthBays) * 0.12;
   // wall mass (set in from the columns so the colonnade reads in front)
-  if (wall) B.box('timber', w * 0.9, h, d * 0.9, 0, y + h / 2, 0);
+  if (wall) B.box('wall', w * 0.9, h, d * 0.9, 0, y + h / 2, 0);
   // perimeter columns
   if (colonnade) {
     const place = (x, z) => B.cyl('timber', colR, colR * 1.1, h, x, y + h / 2, z, 8);
@@ -446,8 +461,8 @@ export function bayBody(B, { w, d, h, frontBays = 7, depthBays = 5, y = 0, colon
       place(w / 2, z); place(-w / 2, z);
     }
   }
-  // architrave beam under the eave
-  B.box('timber', w + 0.6, h * 0.12, d + 0.6, 0, y + h - h * 0.06, 0);
+  // architrave beam under the eave — part of the painted 彩画 band
+  B.box('bracket', w + 0.6, h * 0.12, d + 0.6, 0, y + h - h * 0.06, 0);
   if (dougong) dougongCourse(B, { w: w + 0.6, d: d + 0.6, y: y + h, frontBays, depthBays });
   return { topY: y + h + (dougong ? 1.1 : 0) };
 }
@@ -456,9 +471,9 @@ export function bayBody(B, { w, d, h, frontBays = 7, depthBays = 5, y = 0, colon
 export function dougongCourse(B, { w, d, y, frontBays, depthBays }) {
   const bh = 1.0;                          // ~1 m bracket band
   const set = (x, z) => {
-    B.box('detail', 1.1, bh * 0.6, 1.1, x, y + bh * 0.3, z);   // 斗 block
-    B.box('detail', 1.9, bh * 0.28, 0.5, x, y + bh * 0.75, z); // 拱 arm (transverse)
-    B.box('detail', 0.5, bh * 0.28, 1.9, x, y + bh * 0.75, z); // 拱 arm (longitudinal)
+    B.box('bracket', 1.1, bh * 0.6, 1.1, x, y + bh * 0.3, z);   // 斗 block
+    B.box('bracket', 1.9, bh * 0.28, 0.5, x, y + bh * 0.75, z); // 拱 arm (transverse)
+    B.box('bracket', 0.5, bh * 0.28, 1.9, x, y + bh * 0.75, z); // 拱 arm (longitudinal)
   };
   const perFront = Math.max(frontBays, 2) * 2;
   for (let i = 0; i <= perFront; i++) {
@@ -473,18 +488,19 @@ export function dougongCourse(B, { w, d, y, frontBays, depthBays }) {
 }
 
 /* ridge owl-tail ornaments (鸱吻) seated at the two ends of a main ridge */
-export function ridgeOrnaments(B, { ridgeHalf, y, z = 0, s = 1 }) {
+export function ridgeOrnaments(B, { ridgeHalf, y, z = 0, s = 1, tile = 'grey' }) {
+  const role = roofRoleOf(tile);   // 鸱吻 are glazed, colour-matched to the roof field
   const orn = (x) => {
-    B.box('detail', 0.5 * s, 1.8 * s, 1.0 * s, x, y + 0.9 * s, z);              // upright tail body
-    B.box('detail', 1.0 * s, 0.5 * s, 1.0 * s, x + (x < 0 ? 0.45 : -0.45) * s, y + 1.7 * s, z); // inward-curling head
+    B.box(role, 0.5 * s, 1.8 * s, 1.0 * s, x, y + 0.9 * s, z);              // upright tail body
+    B.box(role, 1.0 * s, 0.5 * s, 1.0 * s, x + (x < 0 ? 0.45 : -0.45) * s, y + 1.7 * s, z); // inward-curling head
   };
   orn(-ridgeHalf); orn(ridgeHalf);
 }
 
 /* a treasure-top finial (宝顶) */
 export function finialTop(B, { y, r = 0.6, tall = false }) {
-  B.cyl('detail', r * 0.6, r, tall ? r * 2.2 : r * 1.2, 0, y + (tall ? r * 1.1 : r * 0.6), 0, 12);
-  B.addGeo('detail', new THREE.SphereGeometry(r * 0.8, 12, 10), 0, y + (tall ? r * 2.4 : r * 1.5), 0, { edges: false });
+  B.cyl('gilt', r * 0.6, r, tall ? r * 2.2 : r * 1.2, 0, y + (tall ? r * 1.1 : r * 0.6), 0, 12);
+  B.addGeo('gilt', new THREE.SphereGeometry(r * 0.8, 12, 10), 0, y + (tall ? r * 2.4 : r * 1.5), 0, { edges: false });
 }
 
 /* ============================================================
@@ -492,7 +508,7 @@ export function finialTop(B, { y, r = 0.6, tall = false }) {
    or more arched passages, modeled as one extruded pierced slab so
    the tunnel runs straight through.
    ============================================================ */
-export function gateBase(B, { w, h, d, passages = 1, passW, archRise, y = 0, parapet = true }) {
+export function gateBase(B, { w, h, d, passages = 1, passW, archRise, y = 0, parapet = true, mat = 'brick' }) {
   passW = passW || w * (passages === 1 ? 0.22 : 0.1);
   archRise = archRise || passW * 0.5;
   const straight = h * 0.42;
@@ -511,12 +527,12 @@ export function gateBase(B, { w, h, d, passages = 1, passW, archRise, y = 0, par
   }
   const geo = new THREE.ExtrudeGeometry(shape, { depth: d, bevelEnabled: false, curveSegments: 10 });
   geo.translate(0, 0, -d / 2);
-  B.addGeo('stone', geo, 0, y, 0);
+  B.addGeo(mat, geo, 0, y, 0);
   if (parapet) {
-    B.box('stone', w + 0.8, 0.5, d + 0.8, 0, y + h + 0.25, 0);              // capstone
+    B.box(mat, w + 0.8, 0.5, d + 0.8, 0, y + h + 0.25, 0);                  // capstone
     // 女墙 crenellation hint on the south parapet
     const cn = Math.round(w / 2.4);
-    for (let i = 0; i <= cn; i++) B.box('stone', 0.7, 1.0, 0.5, -w / 2 + (w / cn) * i, y + h + 1.0, d / 2 + 0.3);
+    for (let i = 0; i <= cn; i++) B.box(mat, 0.7, 1.0, 0.5, -w / 2 + (w / cn) * i, y + h + 1.0, d / 2 + 0.3);
   }
   return { topY: y + h + (parapet ? 0.5 : 0) };
 }
@@ -525,7 +541,7 @@ export function gateBase(B, { w, h, d, passages = 1, passW, archRise, y = 0, par
    BRIDGES — a cambered marble deck on arches, with post railings.
    count > 1 lays parallel spans across the line (外金水桥 = 7).
    ============================================================ */
-export function archBridge(B, { span, width, rise = 1.4, count = 1, gap, deckW, grade = false }) {
+export function archBridge(B, { span, width, rise = 1.4, count = 1, gap, deckW, grade = false, mat = 'marble' }) {
   deckW = deckW || (count > 1 ? width / (count * 1.7) : width);
   gap = gap || (count > 1 ? (width - deckW * count) / (count - 1 || 1) : 0);
   const totalW = count > 1 ? width : deckW;
@@ -549,7 +565,7 @@ export function archBridge(B, { span, width, rise = 1.4, count = 1, gap, deckW, 
       pushQuad(pos,
         V(-w / 2, y0 - 0.6, z0), V(-w / 2, y1 - 0.6, z1), V(w / 2, y1 - 0.6, z1), V(w / 2, y0 - 0.6, z0));
     }
-    B.addGeo('stone', geomFrom(pos), cx, 0, 0, { edges: false });
+    B.addGeo(mat, geomFrom(pos), cx, 0, 0, { edges: false });
     // railings (post lines along both sides)
     const railSegs = [];
     for (let i = 0; i <= seg; i++) {
@@ -569,12 +585,12 @@ export function archBridge(B, { span, width, rise = 1.4, count = 1, gap, deckW, 
 export function roundTerrace(B, { rBase, tiers = 3, tierH = 1.8, inset = 4, balustrade = true, stairs = 8, y = 0 }) {
   let r = rBase, cy = y;
   for (let t = 0; t < tiers; t++) {
-    B.cyl('stone', r, r, tierH, 0, cy + tierH / 2, 0, 36);
+    B.cyl('marble', r, r, tierH, 0, cy + tierH / 2, 0, 36);
     if (balustrade) {
       const n = Math.max(16, Math.round(r * 1.6));
       for (let i = 0; i < n; i++) {
         const a = (i / n) * Math.PI * 2;
-        B.box('stone', 0.3, 1.0, 0.3, Math.cos(a) * (r - 0.4), cy + tierH + 0.5, Math.sin(a) * (r - 0.4));
+        B.box('marble', 0.3, 1.0, 0.3, Math.cos(a) * (r - 0.4), cy + tierH + 0.5, Math.sin(a) * (r - 0.4));
       }
       const ringSegs = [];
       for (let i = 0; i < n; i++) {
@@ -588,7 +604,7 @@ export function roundTerrace(B, { rBase, tiers = 3, tierH = 1.8, inset = 4, balu
   // radial stair ramps cutting the terrace (八出陛)
   for (let s = 0; s < stairs; s++) {
     const a = (s / stairs) * Math.PI * 2;
-    B.addGeo('stone', new THREE.BoxGeometry(rBase * 0.16, tiers * tierH, inset * tiers + 2),
+    B.addGeo('marble', new THREE.BoxGeometry(rBase * 0.16, tiers * tierH, inset * tiers + 2),
       Math.cos(a) * (rBase * 0.5), y + (tiers * tierH) / 2, Math.sin(a) * (rBase * 0.5), { rotY: -a });
   }
   return { topR: r + inset, topY: cy };
@@ -608,8 +624,8 @@ export function taperedShaft(B, { wBot, wTop, d, dTop, h, y = 0 }) {
 
 /* a tall brick block gridded with small recessed arrow-slit windows (箭楼) */
 export function arrowSlitBlock(B, { w, h, d, rows = 4, colsFront = 12, y = 0 }) {
-  B.box('stone', w, h, d, 0, y + h / 2, 0);
-  const slit = (x, yy, z, fw, fd) => B.box('detail', fw, h / rows * 0.4, fd, x, yy, z);
+  B.box('brick', w, h, d, 0, y + h / 2, 0);
+  const slit = (x, yy, z, fw, fd) => B.box('stone', fw, h / rows * 0.4, fd, x, yy, z);
   for (let r = 0; r < rows; r++) {
     const yy = y + h * (0.18 + 0.74 * r / (rows - 1 || 1));
     for (let c = 0; c < colsFront; c++) {
@@ -630,15 +646,15 @@ export function arrowSlitBlock(B, { w, h, d, rows = 4, colsFront = 12, y = 0 }) 
    along='x' → spans across x at (z); along='z' → spans across z at (x). */
 export function lingxingGate(B, { w = 6, h = 6, x = 0, z = 0, along = 'x' }) {
   if (along === 'x') {
-    B.box('stone', 0.7, h, 0.7, x - w / 2, h / 2, z);
-    B.box('stone', 0.7, h, 0.7, x + w / 2, h / 2, z);
-    B.box('stone', w + 1.2, 0.7, 0.7, x, h - 0.6, z);
-    B.box('stone', w + 2.0, 0.4, 0.9, x, h + 0.1, z);
+    B.box('marble', 0.7, h, 0.7, x - w / 2, h / 2, z);
+    B.box('marble', 0.7, h, 0.7, x + w / 2, h / 2, z);
+    B.box('marble', w + 1.2, 0.7, 0.7, x, h - 0.6, z);
+    B.box('marble', w + 2.0, 0.4, 0.9, x, h + 0.1, z);
   } else {
-    B.box('stone', 0.7, h, 0.7, x, h / 2, z - w / 2);
-    B.box('stone', 0.7, h, 0.7, x, h / 2, z + w / 2);
-    B.box('stone', 0.7, 0.7, w + 1.2, x, h - 0.6, z);
-    B.box('stone', 0.9, 0.4, w + 2.0, x, h + 0.1, z);
+    B.box('marble', 0.7, h, 0.7, x, h / 2, z - w / 2);
+    B.box('marble', 0.7, h, 0.7, x, h / 2, z + w / 2);
+    B.box('marble', 0.7, 0.7, w + 1.2, x, h - 0.6, z);
+    B.box('marble', 0.9, 0.4, w + 2.0, x, h + 0.1, z);
   }
 }
 
@@ -646,7 +662,7 @@ export function lingxingGate(B, { w = 6, h = 6, x = 0, z = 0, along = 'x' }) {
 export function mound(B, { w, d, h, y = 0 }) {
   const geo = new THREE.SphereGeometry(1, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2);
   geo.scale(w / 2, h, d / 2);
-  B.addGeo('timber', geo, 0, y, 0, { edges: false });
+  B.addGeo('earth', geo, 0, y, 0, { edges: false });
   // a few contour lines to read the slope
   const segs = [];
   for (let k = 1; k <= 3; k++) {
@@ -665,7 +681,7 @@ export function mound(B, { w, d, h, y = 0 }) {
 /* four reclining 镇水兽 water-taming beasts on flared corner wing-walls (万宁桥) */
 export function cornerBeasts(B, { w, d, y = 0 }) {
   for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
-    B.box('detail', 1.4, 0.9, 2.2, sx * (w / 2 - 1), y + 0.45, sz * (d / 2 - 1));
+    B.box('stone', 1.4, 0.9, 2.2, sx * (w / 2 - 1), y + 0.45, sz * (d / 2 - 1));
   }
 }
 
