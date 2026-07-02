@@ -11,6 +11,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { createAxisState } from './state.js';
 import { createScene } from './scene.js';
 import { createUI } from './ui.js';
+import { FINALE } from './config.js';
 import { getLenis } from '../motion.js';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -39,6 +40,8 @@ export function initAxis() {
   // the ONE wiring: state → every subsystem (scene only if WebGL came up)
   if (scene) state.subscribe((s) => scene.applyState(s));
   state.subscribe((s) => ui.update(s));
+  // finale presentation: narration card yields to the closing caption
+  state.subscribe((s) => document.body.classList.toggle('axis-finale', s.finale > 0.15));
 
   // scroll → state (the only scroll coupling in the whole system)
   ScrollTrigger.create({
@@ -72,7 +75,8 @@ export function initAxis() {
     const jr = document.getElementById('axis-journey');
     if (!jr) return;
     const top = jr.getBoundingClientRect().top + window.scrollY;
-    const frac = index / (state.segmentCount - 1);
+    // monuments occupy only the pre-finale share of the journey scroll
+    const frac = (index / (state.segmentCount - 1)) * FINALE.start;
     const y = top + frac * (jr.offsetHeight - window.innerHeight);
     const lenis = getLenis();
     if (lenis) lenis.scrollTo(y, { duration: 1.1 });

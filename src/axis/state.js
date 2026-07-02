@@ -6,6 +6,7 @@
    ============================================================ */
 
 import { MONUMENTS } from '../data/axis.js';
+import { FINALE } from './config.js';
 
 const N = MONUMENTS.length;
 const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
@@ -13,11 +14,12 @@ const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
 export function createAxisState() {
   const state = {
     scroll: 0,      // raw scroll progress 0..1
-    t: 0,           // scroll mapped to 0..(N-1)
+    t: 0,           // journey progress mapped to 0..(N-1)
     segment: 0,     // current segment index (the lower of the bracketing pair)
     intra: 0,       // progress within the current segment, 0..1
     active: 0,      // nearest monument index → drives highlight + narration
     axisPos: 0,     // interpolated spatial position along the axis (0..1) → drives camera
+    finale: 0,      // 0 during the walk; 0..1 through the closing pull-back
     ground: 'massing', // 'massing' | 'satellite'
   };
 
@@ -28,7 +30,9 @@ export function createAxisState() {
   function setScroll(p) {
     p = clamp01(p);
     state.scroll = p;
-    const t = p * (N - 1);
+    // the walk occupies scroll 0..FINALE.start; the rest is the pull-back
+    const jp = Math.min(1, p / FINALE.start);
+    const t = jp * (N - 1);
     state.t = t;
     const seg = Math.min(N - 2, Math.max(0, Math.floor(t)));
     state.segment = seg;
@@ -37,6 +41,7 @@ export function createAxisState() {
     const a = MONUMENTS[seg].spatial.pos;
     const b = MONUMENTS[seg + 1].spatial.pos;
     state.axisPos = a + (b - a) * state.intra;
+    state.finale = p <= FINALE.start ? 0 : (p - FINALE.start) / (1 - FINALE.start);
     notify();
   }
 

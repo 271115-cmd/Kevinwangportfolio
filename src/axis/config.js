@@ -72,3 +72,28 @@ export const CINE = {
   // perf
   pixelCapFull: 2, pixelCapWeak: 1.5,
 };
+
+// ============================================================
+// DAY_STOPS — a day's walk. t = position along the axis (0 south → 1 north):
+// dawn at Yongdingmen → high warm light through the imperial core → dusk at
+// the Bell & Drum Towers (the city's timekeepers announcing nightfall).
+// Sun el/az sweep east → south → west; skyBottom stays == fog colour.
+// ============================================================
+export const DAY_STOPS = [
+  { t: 0.00, skyTop: 0xC7D2E2, skyBottom: 0xF6E3CE, sun: 0xFFC493, sunInt: 1.75, el: 10, az: 78, hemi: 0.50 },
+  { t: 0.45, skyTop: 0xBFC9D6, skyBottom: 0xF3E9D8, sun: 0xFFE9C6, sunInt: 2.10, el: 30, az: 18, hemi: 0.55 },
+  { t: 1.00, skyTop: 0x7C86A0, skyBottom: 0xEFCDA6, sun: 0xFF9F63, sunInt: 1.35, el: 12, az: -70, hemi: 0.42 },
+];
+
+// ============================================================
+// FINALE — the pull-back. The last stretch of scroll lifts the camera above
+// the Bell Tower to look back south down the whole line; monuments light up
+// south → north in a cascade and the haze lifts so the full 7.8 km reads.
+// ============================================================
+export const FINALE = {
+  start: 0.86,                        // scroll fraction where the finale begins
+  camX: 140, camY: 300, camZbeyond: 140,   // aerial pose near the spine, above/north of the Bell Tower
+  lookY: 18, lookPos: 0.40,           // gaze back south down the line
+  fogNear: 520, fogFar: 3600,         // the veil lifts
+  litBy: 0.9,                         // the south→north light-up cascade lands as the camera settles
+};

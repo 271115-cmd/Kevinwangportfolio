@@ -73,7 +73,11 @@ export function makeMaterials() {
   // shader program). Glazed tiles + lacquer use MeshPhysical (clearcoat) for the
   // wet-glaze read; everything else is MeshStandard. Hexes are pushed a touch
   // to survive ACES (per the material research). ONE metal only: gilt.
-  const mk = (Type, o, micro) => applyMicroDetail(new Type({ metalness: 0, ...o }), micro);
+  const mk = (Type, o, micro) => {
+    const m = applyMicroDetail(new Type({ metalness: 0, ...o }), micro);
+    m.userData.micro = micro;      // kept so the bloom transitioner can clone w/ the SAME program
+    return m;
+  };
   const on = {
     marble:  mk(S, { color: 0xE9E7DE, roughness: 0.42, envMapIntensity: 1.05 }, { scale: 3.0, rough: 0.10, bump: 0.030 }),   // 汉白玉
     wall:    mk(S, { color: 0xA5382C, roughness: 0.70, envMapIntensity: 0.85 }, { scale: 2.2, rough: 0.15, bump: 0.055 }),   // 红墙 plaster
@@ -695,6 +699,99 @@ export function setFocus(group, on, M) {
   if (!ud || !ud.meshes) return;
   for (const { mesh, role } of ud.meshes) mesh.material = on ? M.on[role] : M.off;
   for (const e of ud.edges) e.visible = on;
+}
+
+/* ============================================================
+   focus transitioner — the material BLOOM. Instead of a hard swap,
+   a monument gaining focus blooms from the pale ghost into its real
+   materials (colour saturates, roughness slides matte→glaze, gilt
+   catches light); the one losing focus fades back. Implementation:
+   two pre-cloned material sets (in/out) whose micro-detail params —
+   and therefore customProgramCacheKey — match the shared singletons,
+   so NO shader recompiles happen mid-bloom (clearcoat is kept >0 so
+   the USE_CLEARCOAT define never flips). Only uniforms animate.
+   Jobs finish with a hard setFocus back to the shared singletons.
+   ============================================================ */
+export function createFocusTransitioner(M, { inMs = 650, outMs = 420 } = {}) {
+  const reduced = typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const mkSet = () => {
+    const s = {};
+    for (const k in M.on) {
+      const src = M.on[k];
+      const c = applyMicroDetail(src.clone(), src.userData.micro);
+      if ('clearcoat' in c) c.clearcoat = Math.max(c.clearcoat, 0.001);
+      s[k] = c;
+    }
+    return s;
+  };
+  const setIn = mkSet(), setOut = mkSet();
+  const jobs = [];
+  const smooth = (x) => x * x * (3 - 2 * x);
+  const finish = (j) => setFocus(j.group, j.mode === 'in', M);
+
+  function start(group, mode, now) {
+    if (!group || !group.userData?.meshes) return;
+    // a group evicted from the scene (big scroll jump) shouldn't animate an out-bloom
+    if (mode === 'out' && !group.parent) { setFocus(group, false, M); return; }
+    const set = mode === 'in' ? setIn : setOut;
+    for (const { mesh, role } of group.userData.meshes) {
+      const real = M.on[role];
+      if (!real) continue;
+      const c = set[role];
+      const from = mode === 'in' ? M.off : real;     // start at the state we come FROM
+      c.color.copy(from.color);
+      c.roughness = from.roughness;
+      c.metalness = from.metalness ?? 0;
+      c.envMapIntensity = from.envMapIntensity ?? 1;
+      if ('clearcoat' in c) {
+        c.clearcoat = mode === 'in' ? 0.001 : Math.max(real.clearcoat ?? 0, 0.001);
+        c.clearcoatRoughness = real.clearcoatRoughness ?? 0.3;
+      }
+      mesh.material = c;
+    }
+    for (const e of group.userData.edges) e.visible = mode === 'in';   // ink lines lead the bloom
+    jobs.push({ group, mode, t0: now, dur: mode === 'in' ? inMs : outMs });
+  }
+
+  return {
+    /** hand focus from prevGroup to curGroup (either may be null) */
+    focus(prevGroup, curGroup, now) {
+      if (reduced) {
+        if (prevGroup) setFocus(prevGroup, false, M);
+        if (curGroup) setFocus(curGroup, true, M);
+        return;
+      }
+      this.snapAll();                    // interrupt = settle instantly, then hand over
+      if (prevGroup) start(prevGroup, 'out', now);
+      if (curGroup) start(curGroup, 'in', now);
+    },
+    /** advance running blooms; call once per rendered frame */
+    tick(now) {
+      for (let i = jobs.length - 1; i >= 0; i--) {
+        const j = jobs[i];
+        const k = smooth(Math.min(1, (now - j.t0) / j.dur));
+        const toReal = j.mode === 'in';
+        for (const { mesh, role } of j.group.userData.meshes) {
+          const real = M.on[role];
+          const c = mesh.material;
+          if (!real || (c !== setIn[role] && c !== setOut[role])) continue;
+          const a = toReal ? M.off : real, b = toReal ? real : M.off;
+          c.color.lerpColors(a.color, b.color, k);
+          c.roughness = a.roughness + (b.roughness - a.roughness) * k;
+          c.metalness = (a.metalness ?? 0) + ((b.metalness ?? 0) - (a.metalness ?? 0)) * k;
+          c.envMapIntensity = (a.envMapIntensity ?? 1) + ((b.envMapIntensity ?? 1) - (a.envMapIntensity ?? 1)) * k;
+          if ('clearcoat' in c) {
+            const ca = toReal ? 0.001 : Math.max(real.clearcoat ?? 0, 0.001);
+            const cb = toReal ? Math.max(real.clearcoat ?? 0, 0.001) : 0.001;
+            c.clearcoat = ca + (cb - ca) * k;
+          }
+        }
+        if (k >= 1) { finish(j); jobs.splice(i, 1); }
+      }
+    },
+    /** settle every running bloom to its end state immediately */
+    snapAll() { for (const j of jobs) finish(j); jobs.length = 0; },
+  };
 }
 
 /* free a built group's geometry (materials are shared — never disposed) */

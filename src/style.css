@@ -428,7 +428,7 @@ body.dd-open #dd-scrim { pointer-events: auto; }
 .axis-lead { margin-top: 1rem; max-width: 54ch; line-height: 1.4; }
 .axis-lead .accent { font-style: italic; }
 .ax-cue { margin-top: 1.6rem; color: var(--ink); }
-.axis-journey { height: 1900vh; }
+.axis-journey { height: 2200vh; }   /* the walk (≤86%) + the finale pull-back */
 .axis-narration, .axis-rail { position: fixed; z-index: 6; opacity: 0; visibility: hidden; transition: opacity .4s; }
 body.axis-active .axis-narration, body.axis-active .axis-rail { opacity: 1; visibility: visible; }
 .axis-narration { left: var(--pad); bottom: 9vh; width: min(420px,44vw); background: var(--paper); border: 1px solid var(--line); padding: 1rem 1.1rem; }
@@ -442,6 +442,16 @@ body.axis-active .axis-narration, body.axis-active .axis-rail { opacity: 1; visi
 .axis-bar-track { width: 1px; height: 36vh; background: var(--line); position: relative; }
 .axis-bar { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--ink); transform-origin: top; transform: scaleY(0); }
 @media (max-width: 640px) { .axis-rail { display: none; } }
+/* finale: narration yields to the closing caption while the camera pulls back */
+body.axis-finale .axis-narration { opacity: 0; visibility: hidden; }
+.axis-finale-cap {
+  position: fixed; left: 50%; bottom: 10vh; z-index: 6; text-align: center;
+  opacity: 0; visibility: hidden; transform: translateX(-50%) translateY(12px);
+  transition: opacity .8s ease, transform .8s ease, visibility .8s;
+}
+.axis-finale-cap .mono { display: block; font-size: .78rem; letter-spacing: .18em; color: var(--ink-soft); margin-bottom: .35rem; }
+.axis-finale-cap em { font-style: normal; font-size: 1.05rem; }
+body.axis-active.axis-finale .axis-finale-cap { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
 .axis-section { position: relative; z-index: 1; background: var(--paper); border-top: 1px solid var(--line); padding: clamp(1.5rem,4vw,3rem) 0; }
 .ax-sub { color: var(--ink); margin: clamp(1.5rem,4vw,2.5rem) 0 .8rem; padding-bottom: .4rem; border-bottom: 1px solid var(--line); }
 .ax-cosmo { display: grid; grid-template-columns: repeat(2,1fr); gap: 1.4rem; }
